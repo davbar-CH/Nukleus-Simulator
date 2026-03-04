@@ -8,6 +8,12 @@ from Elemente import periodensystem
 import random
 
 def text_auslesen(input_text):
+    """
+    Die Funktion liest mit Regex den Text aus und berechnet die Neutronenzahl
+
+    :param input_text: Text aus der Textbox, in der Form "Element-Massenzahl".
+    :return: gibt den Namen des Elementes, die Massenzahl, die Neutronenzahl und Ordnungszahl zurück.
+    """
     element = re.search(r"(\b[A-Z][a-z]*\b)", input_text)
     massenzahl = re.search(r"(\b[0-9]+\b)", input_text)
 
@@ -16,29 +22,56 @@ def text_auslesen(input_text):
 
     element = element.group()
     massenzahl = int(massenzahl.group())
-    name, ordnungszahl = periodensystem[element]
+    name, ordnungszahl, n_schalen = periodensystem[element]
     n_neutronen = massenzahl - int(ordnungszahl)
 
-    print(name, massenzahl, n_neutronen)
-    return name, massenzahl, n_neutronen, ordnungszahl
+    print(f"{name}, Massenzahl:{massenzahl}, Ordnungszahl:{ordnungszahl}")
+    return name, massenzahl, n_neutronen, ordnungszahl, n_schalen
 
 
-def positions_berechnung(massenzahl, n_neutronen, ordnungszahl, plotter):
-    radius = 1
+def positions_berechnung(massenzahl, n_neutronen, ordnungszahl, n_schalen, plotter, radius=1):
+    """
+    Die Funktion berechnet anhand der Massenzahl (also der Anzahl Nukleonen) die Position der Nukleonen
+    mit Hilfe des "Fibonacci Sphere Algorithm".
+
+    Danach nähert die Funktion die Nukleonen (also Sphären) so nahe aneinander, bis sie sich berühren. In Blau werden
+    die Neutronen, in Rot die Protonen dargestellt.
+
+    Die Funktion berechnet zudem die Lage und Ausrichtung der Kreisbahnen der Elektronen (k, l, m usw. Schalen).
+
+    :param radius: der Radius der einzelnen Nukleonen
+    :param massenzahl: die Massenzahl des Elementes
+    :param n_neutronen: die Anzahl Neutronen eines Elementes, wird in text_auslesen() berechnet
+    :param ordnungszahl: die Ordnungszahl des Elementes
+    :param plotter: das plotter-widget, um den Nukleus in pyvista darzustellen
+    :return: startet automatisch den Plot
+    """
+
     indices = np.arange(0, massenzahl, dtype=float) + 0.5
+    indices_bahnen = np.arange(0, n_schalen, dtype=float) + 0.5
 
     phi = np.arccos(1 - 2 * indices / massenzahl)
     theta = np.pi * (1 + 5 ** 0.5) * indices
+
+    phi_schalen = np.arccos(1 - 2 * indices_bahnen / n_schalen)
+    theta_schalen = np.pi * (1 + 5 ** 0.5) * indices_bahnen
 
     x = np.cos(theta) * np.sin(phi)
     y = np.sin(theta) * np.sin(phi)
     z = np.cos(phi)
 
+    x_schalen = np.cos(theta_schalen) * np.sin(phi_schalen)
+    y_schalen = np.sin(theta_schalen) * np.sin(phi_schalen)
+    z_schalen = np.cos(phi_schalen)
+
+
     start2 = time.time()
     begrenzung = radius * np.sqrt(massenzahl / np.pi)
 
+    plotter.clear()
 
     alle_kugeln = []
+    groesste_x_cord_2 = 0
     for x_cords, y_cords, z_cords in zip(x, y, z):
         p = np.array([x_cords, y_cords, z_cords])
         norm_p = np.linalg.norm(p)
@@ -46,10 +79,22 @@ def positions_berechnung(massenzahl, n_neutronen, ordnungszahl, plotter):
         k = 1 - (begrenzung / norm_p)
         op_final = (1 - k) * p
 
+        groesste_x_cord_1 = op_final[0]
+        if groesste_x_cord_1 > groesste_x_cord_2:
+            groesste_x_cord_2 = groesste_x_cord_1
+
         sphere = pv.Sphere(center=op_final, radius=radius).triangulate()
         alle_kugeln.append(sphere)
 
-    plotter.clear()
+    abstand = 7
+
+    for x_cords_schalen, y_cords_schalen, z_cords_schalen in zip(x_schalen, y_schalen, z_schalen):
+
+        bahn = pv.Disc(c_res=50, inner=groesste_x_cord_2 + abstand, outer=groesste_x_cord_2 + abstand+0.5,
+                       normal=(x_cords_schalen, y_cords_schalen, z_cords_schalen))
+        plotter.add_mesh(bahn)
+        abstand = abstand + 3
+
 
     if massenzahl:
         random_neutronen = random.sample(alle_kugeln, n_neutronen)
@@ -65,10 +110,11 @@ def positions_berechnung(massenzahl, n_neutronen, ordnungszahl, plotter):
         for proton in random_protonen:
             plotter.add_mesh(proton, color="red", style='wireframe')
 
+        plotter.add_axes()
         plotter.render()
 
     end2 = time.time()
-    print(end2 - start2)
+    print(f"Laufzeit: {end2 - start2}")
 
 
 class MainWindow(QMainWindow):
@@ -104,12 +150,13 @@ class MainWindow(QMainWindow):
             print("Keine Eingabe")
             return
 
-        name, massenzahl, n_neutronen, ordnungszahl = resultat
+        name, massenzahl, n_neutronen, ordnungszahl, n_schalen = resultat
 
         positions_berechnung(
             massenzahl,
             n_neutronen,
             ordnungszahl,
+            n_schalen,
             self.plotter
         )
 
