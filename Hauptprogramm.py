@@ -66,7 +66,7 @@ def positions_berechnung(massenzahl, n_neutronen, ordnungszahl, n_schalen, plott
 
 
     start2 = time.time()
-    begrenzung = radius * np.sqrt(massenzahl / np.pi)
+    begrenzung = radius * np.sqrt(massenzahl / np.pi) # oder 2r=2Rsin(n/π​)
 
     plotter.clear()
 
