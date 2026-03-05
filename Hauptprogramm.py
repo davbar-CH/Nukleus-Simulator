@@ -39,6 +39,12 @@ def positions_berechnung(massenzahl, n_neutronen, ordnungszahl, n_schalen, plott
 
     Die Funktion berechnet zudem die Lage und Ausrichtung der Kreisbahnen der Elektronen (k, l, m usw. Schalen).
 
+    Idee hinter der Begrenzung: Die Kugeln mit Radius r sind gleichmässig auf einer grösseren Kugel mit Radius R
+    verteilt. Zwei Kugeln berühren sich, wenn der Abstand zwischen ihnen 2*r beträgt. Packe ich die Kugeln nahe bei-
+    einander, dann wird eine Kugel von etwa sechs anderen Kugeln umgeben (hexagonale Anordnung). Somit kann als
+    Näherung die Fläche eines Sechsecks für den Kreis genommen werden. Die Sechsecke müssen die gesamte Kreis-
+    oberfläche füllen, also 4*pi*r^2.
+
     :param radius: der Radius der einzelnen Nukleonen
     :param massenzahl: die Massenzahl des Elementes
     :param n_neutronen: die Anzahl Neutronen eines Elementes, wird in text_auslesen() berechnet
@@ -66,7 +72,7 @@ def positions_berechnung(massenzahl, n_neutronen, ordnungszahl, n_schalen, plott
 
 
     start2 = time.time()
-    begrenzung = radius * np.sqrt(massenzahl / np.pi) # oder 2r=2Rsin(n/π​)
+    begrenzung = 0.52*radius * np.sqrt(massenzahl) # oder R =r / sin(n/pi) für eine engere Packung
 
     plotter.clear()
 
