@@ -1,7 +1,8 @@
+
+
 periodensystem = {
     "H": ("Wasserstoff", 1, 1),
     "He": ("Helium", 2, 1),
-
     "Li": ("Lithium", 3, 2),
     "Be": ("Beryllium", 4, 2),
     "B": ("Bor", 5, 2),
@@ -10,7 +11,6 @@ periodensystem = {
     "O": ("Sauerstoff", 8, 2),
     "F": ("Fluor", 9, 2),
     "Ne": ("Neon", 10, 2),
-
     "Na": ("Natrium", 11, 3),
     "Mg": ("Magnesium", 12, 3),
     "Al": ("Aluminium", 13, 3),
@@ -19,7 +19,6 @@ periodensystem = {
     "S": ("Schwefel", 16, 3),
     "Cl": ("Chlor", 17, 3),
     "Ar": ("Argon", 18, 3),
-
     "K": ("Kalium", 19, 4),
     "Ca": ("Calcium", 20, 4),
     "Sc": ("Scandium", 21, 4),
@@ -38,7 +37,6 @@ periodensystem = {
     "Se": ("Selen", 34, 4),
     "Br": ("Brom", 35, 4),
     "Kr": ("Krypton", 36, 4),
-
     "Rb": ("Rubidium", 37, 5),
     "Sr": ("Strontium", 38, 5),
     "Y": ("Yttrium", 39, 5),
@@ -57,7 +55,6 @@ periodensystem = {
     "Te": ("Tellur", 52, 5),
     "I": ("Iod", 53, 5),
     "Xe": ("Xenon", 54, 5),
-
     "Cs": ("Cäsium", 55, 6),
     "Ba": ("Barium", 56, 6),
     "La": ("Lanthan", 57, 6),
@@ -90,7 +87,6 @@ periodensystem = {
     "Po": ("Polonium", 84, 6),
     "At": ("Astat", 85, 6),
     "Rn": ("Radon", 86, 6),
-
     "Fr": ("Francium", 87, 7),
     "Ra": ("Radium", 88, 7),
     "Ac": ("Actinium", 89, 7),

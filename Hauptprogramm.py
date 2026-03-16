@@ -6,6 +6,7 @@ import time
 import re
 from Elemente import periodensystem
 import random
+import radioactivedecay as rd
 
 def text_auslesen(input_text):
     """
@@ -14,6 +15,7 @@ def text_auslesen(input_text):
     :param input_text: Text aus der Textbox, in der Form "Element-Massenzahl".
     :return: gibt den Namen des Elementes, die Massenzahl, die Neutronenzahl und Ordnungszahl zurück.
     """
+
     element = re.search(r"(\b[A-Z][a-z]*\b)", input_text)
     massenzahl = re.search(r"(\b[0-9]+\b)", input_text)
 
@@ -26,7 +28,7 @@ def text_auslesen(input_text):
     n_neutronen = massenzahl - int(ordnungszahl)
 
     print(f"{name}, Massenzahl:{massenzahl}, Ordnungszahl:{ordnungszahl}")
-    return name, massenzahl, n_neutronen, ordnungszahl, n_schalen
+    return name, massenzahl, n_neutronen, ordnungszahl, n_schalen, input_text
 
 
 def positions_berechnung(massenzahl, n_neutronen, ordnungszahl, n_schalen, plotter, radius=1):
@@ -70,9 +72,8 @@ def positions_berechnung(massenzahl, n_neutronen, ordnungszahl, n_schalen, plott
     y_schalen = np.sin(theta_schalen) * np.sin(phi_schalen)
     z_schalen = np.cos(phi_schalen)
 
-
     start2 = time.time()
-    begrenzung = 0.52*radius * np.sqrt(massenzahl) # oder R =r / sin(n/pi) für eine engere Packung
+    begrenzung = 0.52*radius * np.sqrt(massenzahl)  # oder R =r / sin(n/pi) für eine engere Packung
 
     plotter.clear()
 
@@ -130,22 +131,29 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Nukleus Simulation")
         self.setGeometry(100, 100, 800, 600)
 
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
+        layout_vertikal = QVBoxLayout()
+        layout_horizontal = QHBoxLayout()
 
-        layout = QVBoxLayout()
-        central_widget.setLayout(layout)
+        self.infos = QLabel("")
+        layout_horizontal.addWidget(self.infos)
 
         self.textbox = QTextEdit(self)
-        layout.addWidget(self.textbox)
+        layout_horizontal.addWidget(self.textbox)
+
+        layout_horizontal.setSpacing(150)
+
+        layout_vertikal.addLayout(layout_horizontal)
 
         self.plotter = pvqt.QtInteractor(self)
-        layout.addWidget(self.plotter.interactor)
+        layout_vertikal.addWidget(self.plotter.interactor)
 
         self.button = QPushButton("Start")
-        layout.addWidget(self.button)
+        layout_vertikal.addWidget(self.button)
         self.button.clicked.connect(self.update_plot)
 
+        central_widget = QWidget()
+        central_widget.setLayout(layout_vertikal)
+        self.setCentralWidget(central_widget)
 
     def update_plot(self):
         input_text = self.textbox.toPlainText()
@@ -156,7 +164,18 @@ class MainWindow(QMainWindow):
             print("Keine Eingabe")
             return
 
-        name, massenzahl, n_neutronen, ordnungszahl, n_schalen = resultat
+        name, massenzahl, n_neutronen, ordnungszahl, n_schalen, element = resultat
+
+        start = rd.Nuclide(f"{element}")
+
+        try:
+            while True:
+                naechstes_element = start.progeny()
+                print(naechstes_element[0])
+                self.infos.setText(naechstes_element[0])
+                start = rd.Nuclide(f"{naechstes_element[0]}")
+        except IndexError:
+            print("fertig")
 
         positions_berechnung(
             massenzahl,
@@ -171,3 +190,4 @@ app = QApplication([])
 window = MainWindow()
 window.show()
 app.exec_()
+
