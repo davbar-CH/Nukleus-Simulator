@@ -1,7 +1,7 @@
-
+import pyvista as pv
 import pyvistaqt as pvqt
 from PyQt5.QtWidgets import *
-
+import numpy as np
 import re
 
 def text_auslesen(input_text):
@@ -41,6 +41,28 @@ def text_auslesen(input_text):
     endung_rest = re.findall(endung_pattern_rest, it_ohne_ster_sub, flags=re.IGNORECASE)
 
     return stereo, substituent, isCyclo, stamm, bindung, endung_saeure_al, endung_rest
+
+def darsteller(stereo, substituent, isCyclo, stamm, bindung, endung_saeure_al, endung_rest, plotter):
+    plotter.clear()
+    stamm_laenge = {
+        "Eth": 2,
+        "Prop": 3,
+        "But": 4,
+        "Pent": 5,
+        "Hex": 6,
+        "Hept": 7,
+        "Oct": 8,
+        "Non": 9,
+        "Dec": 10
+    }
+
+    stamm_kette_punkte = np.array([[x * 0.5, (1 - (-1) ** x) / 2, 0]for x in range(0, stamm_laenge.get(stamm[0]))])
+    print(stamm_kette_punkte)
+    stamm_kette = pv.lines_from_points(stamm_kette_punkte)
+    plotter.add_mesh(stamm_kette,line_width=4)
+    plotter.add_axes()
+    plotter.camera_position = 'xy'
+    plotter.render()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -84,6 +106,17 @@ class MainWindow(QMainWindow):
 
         stereo, substituent, isCyclo, stamm, bindung, endung_saeure_al, endung_rest = resultat
         print(stereo, substituent, isCyclo, stamm, bindung, endung_saeure_al, endung_rest)
+        darsteller(
+            stereo,
+            substituent,
+            isCyclo,
+            stamm,
+            bindung,
+            endung_saeure_al,
+            endung_rest,
+            self.plotter
+        )
+
 
 app = QApplication([])
 window = MainWindow()
