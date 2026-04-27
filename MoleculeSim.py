@@ -46,20 +46,98 @@ def darsteller(stereo, substituent, isCyclo, stamm, bindung, endung_saeure_al, e
     plotter.clear()
     stamm_laenge = {
         "Eth": 2,
+        "eth": 2,
         "Prop": 3,
+        "prop": 3,
         "But": 4,
+        "but": 4,
         "Pent": 5,
+        "pent": 5,
         "Hex": 6,
+        "hex": 6,
         "Hept": 7,
+        "hept": 7,
         "Oct": 8,
+        "oct": 8,
         "Non": 9,
-        "Dec": 10
+        "non": 9,
+        "Dec": 10,
+        "dec": 10,
+    }
+    substituent_laenge = {
+        "Methyl": 1,
+        "methyl": 1,
+        "Ethyl": 2,
+        "ethyl": 2,
+        "Propyl": 3,
+        "propyl": 3,
+        "Butyl": 4,
+        "butyl": 4,
+        "Pentyl": 5,
+        "pentyl": 5,
+        "Hexyl": 6,
+        "hexyl": 6,
+        "Heptyl": 7,
+        "heptyl": 7,
+        "Octyl": 8,
+        "octyl": 8,
+        "Nonyl": 9,
+        "nonyl": 9,
+        "Decyl": 10,
+        "decyl": 10,
     }
 
     stamm_kette_punkte = np.array([[x * 0.5, (1 - (-1) ** x) / 2, 0]for x in range(0, stamm_laenge.get(stamm[0]))])
     print(stamm_kette_punkte)
     stamm_kette = pv.lines_from_points(stamm_kette_punkte)
     plotter.add_mesh(stamm_kette,line_width=4)
+
+    try:
+        alle_sub_pos = re.findall(r"\d", substituent[0][0])
+        alle_sub_pos = [int(x) for x in alle_sub_pos]
+
+        besetzt_liste = []
+
+        for sub_pos in alle_sub_pos:
+            if sub_pos in besetzt_liste:
+                if sub_pos % 2 == 0:
+
+                    sub_alkan_punkte = np.array([[stamm_kette_punkte[sub_pos-1][0] - ((-1 + (-1) ** x) / 8), (x + 2) * 0.5, 0] for x in
+                                                 range(0, substituent_laenge.get(substituent[0][2])+1)])
+                    besetzt_liste.append(sub_pos)
+                    sub_alkan_kette = pv.lines_from_points(sub_alkan_punkte)
+                    plotter.add_mesh(sub_alkan_kette, line_width=2)
+                else:
+                    sub_alkan_punkte = np.array(
+                        [[stamm_kette_punkte[sub_pos - 1][0] - ((-1 + (-1) ** x) / 8), x * -0.5, 0] for x in
+                         range(0, substituent_laenge.get(substituent[0][2]) + 1)])
+                    besetzt_liste.append(sub_pos)
+                    sub_alkan_kette = pv.lines_from_points(sub_alkan_punkte)
+                    plotter.add_mesh(sub_alkan_kette, line_width=2)
+                print(sub_alkan_punkte)
+            else:
+                if sub_pos % 2 == 0:
+
+                    sub_alkan_punkte = np.array(
+                        [[stamm_kette_punkte[sub_pos - 1][0] + ((-1 + (-1) ** x) / 8), (x + 2) * 0.5, 0] for x in
+                         range(0, substituent_laenge.get(substituent[0][2]) + 1)])
+                    besetzt_liste.append(sub_pos)
+                    sub_alkan_kette = pv.lines_from_points(sub_alkan_punkte)
+                    plotter.add_mesh(sub_alkan_kette, line_width=2)
+                else:
+                    sub_alkan_punkte = np.array(
+                        [[stamm_kette_punkte[sub_pos - 1][0] + ((-1 + (-1) ** x) / 8), x * -0.5, 0] for x in
+                         range(0, substituent_laenge.get(substituent[0][2]) + 1)])
+                    besetzt_liste.append(sub_pos)
+                    sub_alkan_kette = pv.lines_from_points(sub_alkan_punkte)
+                    plotter.add_mesh(sub_alkan_kette, line_width=2)
+                print(sub_alkan_punkte)
+
+
+    except:
+        print("kein Substituent")
+
+
     plotter.add_axes()
     plotter.camera_position = 'xy'
     plotter.render()
