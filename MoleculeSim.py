@@ -33,7 +33,7 @@ def text_auslesen(input_text):
     stamm = re.findall(stamm_pattern, it_ohne_ster_sub, flags=re.IGNORECASE)
 
     bindung_pattern = r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?(en|in)(?!\w)"
-    bindung = re.findall(bindung_pattern, it_ohne_ster_sub, flags=re.IGNORECASE)
+    bindung_typ = re.findall(bindung_pattern, it_ohne_ster_sub, flags=re.IGNORECASE)
 
     endung_pattern_saeure_al = r"(säure|al)"
     endung_saeure_al = re.findall(endung_pattern_saeure_al, it_ohne_ster_sub, flags=re.IGNORECASE)
@@ -41,7 +41,7 @@ def text_auslesen(input_text):
     endung_pattern_rest = r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?(ol|amin)"
     endung_rest = re.findall(endung_pattern_rest, it_ohne_ster_sub, flags=re.IGNORECASE)
 
-    return stereo, substituent, isCyclo, stamm, bindung, endung_saeure_al, endung_rest
+    return stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest
 
 
 def stamm_kette(stamm, plotter):
@@ -69,21 +69,53 @@ def stamm_kette(stamm, plotter):
 
         stamm_kette_punkte = np.array([[x * 0.5, (1 - (-1) ** x) / 2, 0] for x in range(0, stamm_laenge.get(stamm[0]))])
         stamm_kette = pv.lines_from_points(stamm_kette_punkte)
-        plotter.add_mesh(stamm_kette, line_width=4)
+        plotter.add_mesh(stamm_kette, line_width=4,color=(0,0,0))
         return stamm_kette_punkte
 
     except Exception as e:
         print(f"Fehler in der stamm_kette: {e}")
 
-def bindung(stamm_kette_punkte, bindung, plotter):
-    alle_pos = [x[0] for x in bindung]
-    alle_bindung = [x[2] for x in bindung]
-    alle_bindung_alle_pos = {}
+def bindung(stamm_kette_punkte, bindung_typ, plotter):
+    alle_pos = [x[0] for x in bindung_typ]
+    alle_bindungen = [x[2] for x in bindung_typ]
+    alle_bindungen_alle_pos = {}
+
+    verschiebung_oben = np.array([0,0.3,0])
+    verschiebung_unten_links = np.array([-0.24, -0.18,0])
+    verschiebung_unten_rechts = np.array([0.24, -0.18, 0])
 
     for i, position in enumerate(alle_pos):
-        sub_pos = {alle_bindung[i]: [int(x) for x in re.findall(r"\d", position)]}
-        alle_bindung_alle_pos.update(sub_pos)
-    print(f"Bindung: {alle_bindung_alle_pos}")
+        bindung_pos = {alle_bindungen[i]: [int(x) for x in re.findall(r"\d", position)]}
+        alle_bindungen_alle_pos.update(bindung_pos)
+
+    for bindung in alle_bindungen_alle_pos:
+        for bindung_pos in alle_bindungen_alle_pos.get(bindung):
+
+            if bindung_pos % 2 == 1:
+                sub_alken_punkte = np.array([
+                    verschiebung_oben+np.array([stamm_kette_punkte[bindung_pos - 1][0], stamm_kette_punkte[bindung_pos - 1][1], 0]),
+                    verschiebung_unten_links+np.array([stamm_kette_punkte[bindung_pos][0], stamm_kette_punkte[bindung_pos][1], 0])
+                ])
+                if bindung == "in":
+                    sub_alkin_punkte = np.array([
+                        verschiebung_oben + np.array(
+                            [stamm_kette_punkte[bindung_pos - 1][0], stamm_kette_punkte[bindung_pos - 1][1], 0]),
+                        verschiebung_unten_links + np.array(
+                            [stamm_kette_punkte[bindung_pos][0], stamm_kette_punkte[bindung_pos][1], 0])
+                    ])
+
+
+            else:
+                sub_alken_punkte = np.array([
+                    verschiebung_unten_rechts + np.array(
+                        [stamm_kette_punkte[bindung_pos - 1][0], stamm_kette_punkte[bindung_pos - 1][1], 0]),
+                    verschiebung_oben + np.array(
+                        [stamm_kette_punkte[bindung_pos][0], stamm_kette_punkte[bindung_pos][1], 0])
+                ])
+
+            sub_alkan_kette = pv.lines_from_points(sub_alken_punkte)
+            plotter.add_mesh(sub_alkan_kette, line_width=2, color=(255, 0, 0))
+
 
 def alkan_substituent(stamm_kette_punkte, substituent, plotter):
     try:
@@ -154,11 +186,11 @@ def alkan_substituent(stamm_kette_punkte, substituent, plotter):
         print("kein Substituent")
 
 
-def darsteller(stereo, substituent, isCyclo, stamm, bindung, endung_saeure_al, endung_rest, plotter):
+def darsteller(stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest, plotter):
     plotter.clear()
 
     stamm_kette_punkte = stamm_kette(stamm, plotter)
-    bindung(stamm_kette_punkte, bindung, plotter)
+    bindung(stamm_kette_punkte, bindung_typ, plotter)
     alkan_substituent(stamm_kette_punkte, substituent, plotter)
 
     plotter.add_axes()
@@ -206,14 +238,15 @@ class MainWindow(QMainWindow):
             print("Keine Eingabe")
             return
 
-        stereo, substituent, isCyclo, stamm, bindung, endung_saeure_al, endung_rest = resultat
-        print(stereo, substituent, isCyclo, stamm, bindung, endung_saeure_al, endung_rest)
+        stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest = resultat
+        print(stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest)
+
         darsteller(
             stereo,
             substituent,
             isCyclo,
             stamm,
-            bindung,
+            bindung_typ,
             endung_saeure_al,
             endung_rest,
             self.plotter
