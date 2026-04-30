@@ -75,6 +75,15 @@ def stamm_kette(stamm, plotter):
     except Exception as e:
         print(f"Fehler in der stamm_kette: {e}")
 
+def bindung(stamm_kette_punkte, bindung, plotter):
+    alle_pos = [x[0] for x in bindung]
+    alle_bindung = [x[2] for x in bindung]
+    alle_bindung_alle_pos = {}
+
+    for i, position in enumerate(alle_pos):
+        sub_pos = {alle_bindung[i]: [int(x) for x in re.findall(r"\d", position)]}
+        alle_bindung_alle_pos.update(sub_pos)
+    print(f"Bindung: {alle_bindung_alle_pos}")
 
 def alkan_substituent(stamm_kette_punkte, substituent, plotter):
     try:
@@ -149,6 +158,7 @@ def darsteller(stereo, substituent, isCyclo, stamm, bindung, endung_saeure_al, e
     plotter.clear()
 
     stamm_kette_punkte = stamm_kette(stamm, plotter)
+    bindung(stamm_kette_punkte, bindung, plotter)
     alkan_substituent(stamm_kette_punkte, substituent, plotter)
 
     plotter.add_axes()
