@@ -44,7 +44,7 @@ def text_auslesen(input_text):
     return stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest
 
 
-def stamm_kette(stamm, plotter):
+def stamm_kette(stamm, plotter, bindung_typ):
     try:
         stamm_laenge = {
             "Eth": 2,
@@ -68,25 +68,44 @@ def stamm_kette(stamm, plotter):
         }
 
         stamm_kette_punkte = np.array([[x * 0.5, (1 - (-1) ** x) / 2, 0] for x in range(0, stamm_laenge.get(stamm[0]))])
+
+        alle_pos = [x[0] for x in bindung_typ]
+        alle_bindungen = [x[2] for x in bindung_typ]
+
+        alle_bindungen_alle_pos = {}
+        for i, position in enumerate(alle_pos):
+            bindung_pos = {alle_bindungen[i]: [int(x) for x in re.findall(r"\d", position)]}
+            alle_bindungen_alle_pos.update(bindung_pos)
+
+        alle_positionen = alle_bindungen_alle_pos.get("en")
+        if "en" in alle_bindungen_alle_pos:
+            for i, pos in enumerate(alle_positionen):
+
+                if i + 1 == len(alle_positionen):
+                    break
+
+                else:
+                    if alle_positionen[i + 1] - pos == 1:
+                        if stamm_kette_punkte[pos][1] == 0:
+                            stamm_kette_punkte[pos][1] = 1
+                        elif stamm_kette_punkte[pos][1] == 1:
+                            stamm_kette_punkte[pos][1] = 0
+                    else:
+                        pass
+
+    
         stamm_kette = pv.lines_from_points(stamm_kette_punkte)
         plotter.add_mesh(stamm_kette, line_width=4,color=(0,0,0))
-        return stamm_kette_punkte
+        return stamm_kette_punkte, alle_bindungen_alle_pos
 
     except Exception as e:
         print(f"Fehler in der stamm_kette: {e}")
 
-def bindung(stamm_kette_punkte, bindung_typ, plotter):
-    alle_pos = [x[0] for x in bindung_typ]
-    alle_bindungen = [x[2] for x in bindung_typ]
-    alle_bindungen_alle_pos = {}
+def bindung(stamm_kette_punkte, bindung_typ, plotter, alle_bindungen_alle_pos):
 
     verschiebung_oben = np.array([0,0.3,0])
     verschiebung_unten_links = np.array([-0.24, -0.18,0])
     verschiebung_unten_rechts = np.array([0.24, -0.18, 0])
-
-    for i, position in enumerate(alle_pos):
-        bindung_pos = {alle_bindungen[i]: [int(x) for x in re.findall(r"\d", position)]}
-        alle_bindungen_alle_pos.update(bindung_pos)
 
     for bindung in alle_bindungen_alle_pos:
         for bindung_pos in alle_bindungen_alle_pos.get(bindung):
@@ -189,8 +208,8 @@ def alkan_substituent(stamm_kette_punkte, substituent, plotter):
 def darsteller(stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest, plotter):
     plotter.clear()
 
-    stamm_kette_punkte = stamm_kette(stamm, plotter)
-    bindung(stamm_kette_punkte, bindung_typ, plotter)
+    stamm_kette_punkte, alle_bindungen_alle_pos = stamm_kette(stamm, plotter, bindung_typ)
+    bindung(stamm_kette_punkte, bindung_typ, plotter, alle_bindungen_alle_pos)
     alkan_substituent(stamm_kette_punkte, substituent, plotter)
 
     plotter.add_axes()
