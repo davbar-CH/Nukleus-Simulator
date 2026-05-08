@@ -77,15 +77,15 @@ def stamm_kette(stamm, plotter, bindung_typ):
             bindung_pos = {alle_bindungen[i]: [int(x) for x in re.findall(r"\d", position)]}
             alle_bindungen_alle_pos.update(bindung_pos)
 
-        alle_positionen = alle_bindungen_alle_pos.get("en")
+        alle_positionen_en = alle_bindungen_alle_pos.get("en")
         if "en" in alle_bindungen_alle_pos:
-            for i, pos in enumerate(alle_positionen):
+            for i, pos in enumerate(alle_positionen_en):
 
-                if i + 1 == len(alle_positionen):
+                if i + 1 == len(alle_positionen_en):
                     break
 
                 else:
-                    if alle_positionen[i + 1] - pos == 1:
+                    if alle_positionen_en[i + 1] - pos == 1:
                         if stamm_kette_punkte[pos][1] == 0:
                             stamm_kette_punkte[pos][1] = 1
                         elif stamm_kette_punkte[pos][1] == 1:
@@ -93,47 +93,68 @@ def stamm_kette(stamm, plotter, bindung_typ):
                     else:
                         pass
 
-    
+        alle_positionen_in = alle_bindungen_alle_pos.get("in")
+        if "in" in alle_bindungen_alle_pos:
+            for pos in alle_positionen_in:
+
+                if pos - 1 == 0:
+                    new_val = 0
+
+                else:
+                    new_val = 1 - stamm_kette_punkte[pos - 1][1]
+
+                    for j in range(pos + 1, len(stamm_kette_punkte)):
+                        stamm_kette_punkte[j][1] = new_val if j == pos + 1 else 1 - stamm_kette_punkte[j][1]
+
+                stamm_kette_punkte[pos - 1][1] = new_val
+                stamm_kette_punkte[pos][1] = new_val
+
+        print(stamm_kette_punkte)
         stamm_kette = pv.lines_from_points(stamm_kette_punkte)
         plotter.add_mesh(stamm_kette, line_width=4,color=(0,0,0))
+
+        for kohlenstoff in stamm_kette_punkte:
+            punkt = pv.Sphere(radius=0.05,center=kohlenstoff)
+            plotter.add_mesh(punkt, line_width=4,color=(0,255,0))
+
         return stamm_kette_punkte, alle_bindungen_alle_pos
 
     except Exception as e:
         print(f"Fehler in der stamm_kette: {e}")
 
-def bindung(stamm_kette_punkte, bindung_typ, plotter, alle_bindungen_alle_pos):
-
-    verschiebung_oben = np.array([0,0.3,0])
-    verschiebung_unten_links = np.array([-0.24, -0.18,0])
-    verschiebung_unten_rechts = np.array([0.24, -0.18, 0])
+def bindung(stamm_kette_punkte, plotter, alle_bindungen_alle_pos, verschiebung=0.05):
 
     for bindung in alle_bindungen_alle_pos:
         for bindung_pos in alle_bindungen_alle_pos.get(bindung):
+            p1 = np.array(stamm_kette_punkte[bindung_pos - 1][:2])
+            p2 = np.array(stamm_kette_punkte[bindung_pos][:2])
 
-            if bindung_pos % 2 == 1:
-                sub_alken_punkte = np.array([
-                    verschiebung_oben+np.array([stamm_kette_punkte[bindung_pos - 1][0], stamm_kette_punkte[bindung_pos - 1][1], 0]),
-                    verschiebung_unten_links+np.array([stamm_kette_punkte[bindung_pos][0], stamm_kette_punkte[bindung_pos][1], 0])
+            richtung = p2 - p1
+
+            normale = np.array([-richtung[1], richtung[0]])
+            normale = normale / np.linalg.norm(normale)
+
+            p1_verschoben_oben = (p1 + verschiebung * normale) + 2*verschiebung * richtung
+            p2_verschoben_oben = (p2 + verschiebung * normale) - 2*verschiebung * richtung
+
+            alken_punkte = np.array([
+                np.array([p1_verschoben_oben[0], p1_verschoben_oben[1], 0]),
+                np.array([p2_verschoben_oben[0], p2_verschoben_oben[1], 0])
+            ])
+            if bindung == "in":
+                p1_verschoben_unten = (p1 - verschiebung * normale) + 2 * verschiebung * richtung
+                p2_verschoben_unten = (p2 - verschiebung * normale) - 2 * verschiebung * richtung
+
+                alkin_punkte = np.array([
+                    np.array([p1_verschoben_unten[0], p1_verschoben_unten[1], 0]),
+                    np.array([p2_verschoben_unten[0], p2_verschoben_unten[1], 0])
                 ])
-                if bindung == "in":
-                    sub_alkin_punkte = np.array([
-                        verschiebung_oben + np.array(
-                            [stamm_kette_punkte[bindung_pos - 1][0], stamm_kette_punkte[bindung_pos - 1][1], 0]),
-                        verschiebung_unten_links + np.array(
-                            [stamm_kette_punkte[bindung_pos][0], stamm_kette_punkte[bindung_pos][1], 0])
-                    ])
 
+                alkin_kette = pv.lines_from_points(alkin_punkte)
+                plotter.add_mesh(alkin_kette, line_width=2, color=(255, 0, 0))
 
-            else:
-                sub_alken_punkte = np.array([
-                    verschiebung_unten_rechts + np.array(
-                        [stamm_kette_punkte[bindung_pos - 1][0], stamm_kette_punkte[bindung_pos - 1][1], 0]),
-                    verschiebung_oben + np.array(
-                        [stamm_kette_punkte[bindung_pos][0], stamm_kette_punkte[bindung_pos][1], 0])
-                ])
-
-            sub_alkan_kette = pv.lines_from_points(sub_alken_punkte)
-            plotter.add_mesh(sub_alkan_kette, line_width=2, color=(255, 0, 0))
+            alken_kette = pv.lines_from_points(alken_punkte)
+            plotter.add_mesh(alken_kette, line_width=2, color=(255, 0, 0))
 
 
 def alkan_substituent(stamm_kette_punkte, substituent, plotter):
@@ -209,7 +230,7 @@ def darsteller(stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_a
     plotter.clear()
 
     stamm_kette_punkte, alle_bindungen_alle_pos = stamm_kette(stamm, plotter, bindung_typ)
-    bindung(stamm_kette_punkte, bindung_typ, plotter, alle_bindungen_alle_pos)
+    bindung(stamm_kette_punkte, plotter, alle_bindungen_alle_pos)
     alkan_substituent(stamm_kette_punkte, substituent, plotter)
 
     plotter.add_axes()
@@ -221,7 +242,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Nukleus Simulation")
+        self.setWindowTitle("Molekül Simulation")
         self.setGeometry(100, 100, 800, 600)
 
         layout_vertikal = QVBoxLayout()
@@ -232,6 +253,7 @@ class MainWindow(QMainWindow):
 
         self.textbox = QTextEdit(self)
         layout_horizontal.addWidget(self.textbox)
+        self.textbox.setFontPointSize(12)
 
         layout_horizontal.setSpacing(150)
 
@@ -258,7 +280,7 @@ class MainWindow(QMainWindow):
             return
 
         stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest = resultat
-        print(stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest)
+        print(resultat)
 
         darsteller(
             stereo,
