@@ -1,5 +1,3 @@
-
-
 periodensystem = {
     "H": ("Wasserstoff", 1, 1),
     "He": ("Helium", 2, 1),

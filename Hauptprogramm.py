@@ -1,5 +1,6 @@
 import pyvista as pv
 import pyvistaqt as pvqt
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import *
 import numpy as np
 import time
@@ -137,6 +138,8 @@ class MainWindow(QMainWindow):
         self.infos = QLabel("")
         layout_horizontal.addWidget(self.infos)
 
+        self.infos.setWordWrap(True)
+
         self.textbox = QTextEdit(self)
         layout_horizontal.addWidget(self.textbox)
 
@@ -166,17 +169,40 @@ class MainWindow(QMainWindow):
 
         name, massenzahl, n_neutronen, ordnungszahl, n_schalen, element = resultat
 
-        start = rd.Nuclide(f"{element}")
+        if ordnungszahl > massenzahl:
+            self.infos.setText(f"{element} gibt es nicht")
+            return
 
+        try:
+            start = rd.Nuclide(f"{element}")
+        except ValueError:
+            self.infos.setText(f"{element} ist zu instabil")
+            positions_berechnung(
+                massenzahl,
+                n_neutronen,
+                ordnungszahl,
+                n_schalen,
+                self.plotter
+            )
+            return
+
+        """zerfallsreihe = []
         try:
             while True:
                 naechstes_element = start.progeny()
                 print(naechstes_element[0])
-                self.infos.setText(naechstes_element[0])
+                zerfallsreihe.append(naechstes_element[0])
                 start = rd.Nuclide(f"{naechstes_element[0]}")
         except IndexError:
             print("fertig")
 
+        if len(zerfallsreihe) == 0:
+            self.infos.setText(f"{element} ist stabil")
+        else:
+            self.infos.setText("Zerfallsreihe"+"\n"+"\n".join([element for element in zerfallsreihe]))
+        self.infos.setFont(QFont('Times', 10))"""
+
+        self.infos.setText(start.plot())
         positions_berechnung(
             massenzahl,
             n_neutronen,

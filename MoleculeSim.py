@@ -13,17 +13,30 @@ def text_auslesen(input_text):
     :return: gibt den Namen des Elementes, die Massenzahl, die Neutronenzahl und Ordnungszahl zurück.
     """
     stereo_pattern = r"\(([EZRSezrs,\d]+)\)-"
-    substituenten_pattern = (r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?("
+    substituenten_pattern_alkan = (r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?("
+                                   r"fluor|chlor|brom|iod)")
+
+    substituenten_pattern_halogen = (r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?("
+                                     r"methyl|ethyl|propyl|butyl|pentyl|hexyl|heptyl|octyl|nonyl|decyl")
+
+    substituenten_pattern_rest = (r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?("
+                                  r"phenyl|nitro|hydroxy|amino|oxo)")
+
+    alle_sub_pattern = (r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?("
                              r"fluor|chlor|brom|iod|methyl|ethyl|propyl|butyl|pentyl|hexyl|heptyl|phenyl|nitro"
                              r"|hydroxy|amino|oxo)")
 
     stereo = re.findall(stereo_pattern, input_text, flags=re.IGNORECASE)
 
-    substituent = re.findall(substituenten_pattern, input_text, flags=re.IGNORECASE)
+    substituent_alkan = re.findall(substituenten_pattern_alkan, input_text, flags=re.IGNORECASE)
+
+    substituent_halogen = re.findall(substituenten_pattern_halogen, input_text, flags=re.IGNORECASE)
+
+    substituent_rest = re.findall(substituenten_pattern_rest, input_text, flags=re.IGNORECASE)
 
     it_ohne_ster = re.sub(stereo_pattern, '', input_text, flags=re.IGNORECASE)
 
-    it_ohne_ster_sub = re.sub(substituenten_pattern, '', it_ohne_ster, flags=re.IGNORECASE)
+    it_ohne_ster_sub = re.sub(alle_sub_pattern, '', it_ohne_ster, flags=re.IGNORECASE)
 
     isCyclo = False
     if re.search(r"cyclo", it_ohne_ster_sub, re.IGNORECASE):
@@ -111,19 +124,19 @@ def stamm_kette(stamm, plotter, bindung_typ):
 
         print(stamm_kette_punkte)
         stamm_kette = pv.lines_from_points(stamm_kette_punkte)
-        plotter.add_mesh(stamm_kette, line_width=4,color=(0,0,0))
+        plotter.add_mesh(stamm_kette, line_width=4, color=(0, 0, 0))
 
         for kohlenstoff in stamm_kette_punkte:
-            punkt = pv.Sphere(radius=0.05,center=kohlenstoff)
-            plotter.add_mesh(punkt, line_width=4,color=(0,255,0))
+            punkt = pv.Sphere(radius=0.04, center=kohlenstoff)
+            plotter.add_mesh(punkt, line_width=4, color=(122, 20, 122))
 
         return stamm_kette_punkte, alle_bindungen_alle_pos
 
     except Exception as e:
         print(f"Fehler in der stamm_kette: {e}")
 
-def bindung(stamm_kette_punkte, plotter, alle_bindungen_alle_pos, verschiebung=0.05):
 
+def bindung(stamm_kette_punkte, plotter, alle_bindungen_alle_pos, verschiebung=0.1):
     for bindung in alle_bindungen_alle_pos:
         for bindung_pos in alle_bindungen_alle_pos.get(bindung):
             p1 = np.array(stamm_kette_punkte[bindung_pos - 1][:2])
@@ -134,8 +147,8 @@ def bindung(stamm_kette_punkte, plotter, alle_bindungen_alle_pos, verschiebung=0
             normale = np.array([-richtung[1], richtung[0]])
             normale = normale / np.linalg.norm(normale)
 
-            p1_verschoben_oben = (p1 + verschiebung * normale) + 2*verschiebung * richtung
-            p2_verschoben_oben = (p2 + verschiebung * normale) - 2*verschiebung * richtung
+            p1_verschoben_oben = (p1 + verschiebung * normale) + 2 * verschiebung * richtung
+            p2_verschoben_oben = (p2 + verschiebung * normale) - 2 * verschiebung * richtung
 
             alken_punkte = np.array([
                 np.array([p1_verschoben_oben[0], p1_verschoben_oben[1], 0]),
@@ -206,7 +219,7 @@ def alkan_substituent(stamm_kette_punkte, substituent, plotter):
             alle_sub_alle_pos.update(sub_pos)
 
         besetzt_liste = []
-
+        print(alle_sub_alle_pos)
         for alkan_substituent in alle_sub_alle_pos:
             for sub_pos in alle_sub_alle_pos.get(alkan_substituent):
                 vorzeichen = -1 if sub_pos in besetzt_liste else 1
