@@ -13,18 +13,18 @@ def text_auslesen(input_text):
     :return: gibt den Namen des Elementes, die Massenzahl, die Neutronenzahl und Ordnungszahl zurück.
     """
     stereo_pattern = r"\(([EZRSezrs,\d]+)\)-"
-    substituenten_pattern_alkan = (r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?("
-                                   r"fluor|chlor|brom|iod)")
-
     substituenten_pattern_halogen = (r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?("
-                                     r"methyl|ethyl|propyl|butyl|pentyl|hexyl|heptyl|octyl|nonyl|decyl")
+                                     r"fluor|chlor|brom|iod)")
+
+    substituenten_pattern_alkan = (r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?("
+                                   r"methyl|ethyl|propyl|butyl|pentyl|hexyl|heptyl|octyl|nonyl|decyl)")
 
     substituenten_pattern_rest = (r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?("
                                   r"phenyl|nitro|hydroxy|amino|oxo)")
 
     alle_sub_pattern = (r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?("
-                             r"fluor|chlor|brom|iod|methyl|ethyl|propyl|butyl|pentyl|hexyl|heptyl|phenyl|nitro"
-                             r"|hydroxy|amino|oxo)")
+                        r"fluor|chlor|brom|iod|methyl|ethyl|propyl|butyl|pentyl|hexyl|heptyl|phenyl|nitro"
+                        r"|hydroxy|amino|oxo)")
 
     stereo = re.findall(stereo_pattern, input_text, flags=re.IGNORECASE)
 
@@ -54,7 +54,7 @@ def text_auslesen(input_text):
     endung_pattern_rest = r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?(ol|amin)"
     endung_rest = re.findall(endung_pattern_rest, it_ohne_ster_sub, flags=re.IGNORECASE)
 
-    return stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest
+    return stereo, substituent_alkan, substituent_halogen, substituent_rest, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest
 
 
 def stamm_kette(stamm, plotter, bindung_typ):
@@ -122,7 +122,6 @@ def stamm_kette(stamm, plotter, bindung_typ):
                 stamm_kette_punkte[pos - 1][1] = new_val
                 stamm_kette_punkte[pos][1] = new_val
 
-        print(stamm_kette_punkte)
         stamm_kette = pv.lines_from_points(stamm_kette_punkte)
         plotter.add_mesh(stamm_kette, line_width=4, color=(0, 0, 0))
 
@@ -219,7 +218,7 @@ def alkan_substituent(stamm_kette_punkte, substituent, plotter):
             alle_sub_alle_pos.update(sub_pos)
 
         besetzt_liste = []
-        print(alle_sub_alle_pos)
+
         for alkan_substituent in alle_sub_alle_pos:
             for sub_pos in alle_sub_alle_pos.get(alkan_substituent):
                 vorzeichen = -1 if sub_pos in besetzt_liste else 1
@@ -239,12 +238,39 @@ def alkan_substituent(stamm_kette_punkte, substituent, plotter):
         print("kein Substituent")
 
 
-def darsteller(stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest, plotter):
+def halogen_substituent(stamm_kette_punkte, substituent_halogen, plotter):
+    alle_pos = [x[0] for x in substituent_halogen]
+    alle_sub = [x[2] for x in substituent_halogen]
+    alle_sub_alle_pos = {}
+
+    for i, position in enumerate(alle_pos):
+        sub_pos = {alle_sub[i]: [int(x) for x in re.findall(r"\d", position)]}
+        alle_sub_alle_pos.update(sub_pos)
+
+    besetzt_liste = []
+
+    for halogen in alle_sub_alle_pos:
+        for sub_pos in alle_sub_alle_pos.get(halogen):
+            vorzeichen = -1 if sub_pos in besetzt_liste else 1
+            y_formel = 0.75 if sub_pos % 2 == 0 else -0.25
+
+            sub_halogen_punkte = np.array([
+                [stamm_kette_punkte[sub_pos - 1][0] + vorzeichen * -0.25, y_formel, 0]
+            ])
+
+            besetzt_liste.append(sub_pos)
+            sub_alkan_kette = pv.lines_from_points(sub_halogen_punkte)
+            plotter.add_mesh(sub_alkan_kette, line_width=2)
+
+
+def darsteller(stereo, substituent_alkan, substituent_halogen, substituent_rest, isCyclo, stamm, bindung_typ,
+               endung_saeure_al, endung_rest, plotter):
     plotter.clear()
 
     stamm_kette_punkte, alle_bindungen_alle_pos = stamm_kette(stamm, plotter, bindung_typ)
     bindung(stamm_kette_punkte, plotter, alle_bindungen_alle_pos)
-    alkan_substituent(stamm_kette_punkte, substituent, plotter)
+    alkan_substituent(stamm_kette_punkte, substituent_alkan, plotter)
+    halogen_substituent(stamm_kette_punkte, substituent_halogen, plotter)
 
     plotter.add_axes()
     plotter.camera_position = "xy"
@@ -292,12 +318,14 @@ class MainWindow(QMainWindow):
             print("Keine Eingabe")
             return
 
-        stereo, substituent, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest = resultat
+        stereo, substituent_alkan, substituent_halogen, substituent_rest, isCyclo, stamm, bindung_typ, endung_saeure_al, endung_rest = resultat
         print(resultat)
 
         darsteller(
             stereo,
-            substituent,
+            substituent_alkan,
+            substituent_halogen,
+            substituent_rest,
             isCyclo,
             stamm,
             bindung_typ,
