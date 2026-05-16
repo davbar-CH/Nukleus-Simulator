@@ -3,6 +3,7 @@ import pyvistaqt as pvqt
 from PyQt5.QtWidgets import *
 import numpy as np
 import re
+from functools import partial
 
 
 def text_auslesen(input_text):
@@ -217,6 +218,7 @@ def alkan_substituent(stamm_kette_punkte, substituent, plotter):
             sub_pos = {alle_sub[i]: [int(x) for x in re.findall(r"\d", position)]}
             alle_sub_alle_pos.update(sub_pos)
 
+        global besetzt_liste
         besetzt_liste = []
 
         for alkan_substituent in alle_sub_alle_pos:
@@ -239,6 +241,14 @@ def alkan_substituent(stamm_kette_punkte, substituent, plotter):
 
 
 def halogen_substituent(stamm_kette_punkte, substituent_halogen, plotter):
+    # Name, Farbe, Grösse
+    halogen_zeichnung = {
+        "brom": ('Br', "#CC5500", 60),
+        "chlor": ('Cl', "#228B22", 50),
+        "fluor": ('F', "#FFD1DC", 40),
+        "iod": ('I', "#9D00FF", 70)
+    }
+
     alle_pos = [x[0] for x in substituent_halogen]
     alle_sub = [x[2] for x in substituent_halogen]
     alle_sub_alle_pos = {}
@@ -247,20 +257,36 @@ def halogen_substituent(stamm_kette_punkte, substituent_halogen, plotter):
         sub_pos = {alle_sub[i]: [int(x) for x in re.findall(r"\d", position)]}
         alle_sub_alle_pos.update(sub_pos)
 
-    besetzt_liste = []
-
     for halogen in alle_sub_alle_pos:
         for sub_pos in alle_sub_alle_pos.get(halogen):
             vorzeichen = -1 if sub_pos in besetzt_liste else 1
-            y_formel = 0.75 if sub_pos % 2 == 0 else -0.25
+            y_formel = 1.5 if sub_pos % 2 == 0 else -0.5
 
             sub_halogen_punkte = np.array([
-                [stamm_kette_punkte[sub_pos - 1][0] + vorzeichen * -0.25, y_formel, 0]
+                np.array([stamm_kette_punkte[sub_pos - 1][0], stamm_kette_punkte[sub_pos - 1][1], 0]),
+                np.array([stamm_kette_punkte[sub_pos - 1][0] + vorzeichen * -0.5, y_formel, 0])
             ])
 
             besetzt_liste.append(sub_pos)
-            sub_alkan_kette = pv.lines_from_points(sub_halogen_punkte)
-            plotter.add_mesh(sub_alkan_kette, line_width=2)
+            verbindung_halogen = pv.lines_from_points(sub_halogen_punkte)
+            plotter.add_mesh(verbindung_halogen, line_width=2)
+
+            halogen_lower = halogen.lower()
+            zeichnung_pos = np.array([[stamm_kette_punkte[sub_pos - 1][0] + vorzeichen * -0.5,
+                             y_formel,0]])
+
+            text, color, point_size = halogen_zeichnung[halogen_lower]
+
+            plotter.add_point_labels(
+                points=zeichnung_pos,
+                labels=[text],
+                font_size=40,
+                point_color=color,
+                point_size=point_size,
+                render_points_as_spheres=True,
+                always_visible=True,
+                shape=None
+            )
 
 
 def darsteller(stereo, substituent_alkan, substituent_halogen, substituent_rest, isCyclo, stamm, bindung_typ,
