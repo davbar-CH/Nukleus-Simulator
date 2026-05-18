@@ -7,10 +7,10 @@ import re
 
 def text_auslesen(input_text):
     """
-    Die Funktion liest mit Regex den Text aus und berechnet die Neutronenzahl
+    Die Funktion liest mit Regex den Text aus und gibt alle Substituenten, Bindungen und Stereoisomerie zurück
 
-    :param input_text: Text aus der Textbox, in der Form "Element-Massenzahl".
-    :return: gibt den Namen des Elementes, die Massenzahl, die Neutronenzahl und Ordnungszahl zurück.
+    :param input_text: Text aus der Textbox, in der Form "(Stereo)-Position-Substituent(en)-Stamm-Position-Bindung".
+    :return: gibt alle Substituenten, Bindungen und Stereoisomerie zurück.
     """
     stereo_pattern = r"\(([EZRSezrs,\d]+)\)-"
     substituenten_pattern_halogen = (r"(?:(\d+(?:,\d+)*)-)?(?:(di|tri|tetra|penta|hexa|hepta|octa|nona|deca))?("
@@ -58,15 +58,18 @@ def text_auslesen(input_text):
 
 
 def dic_converter(input):
-    alle_pos = [x[0] for x in input]
-    alle_gruppen = [x[2].lower() for x in input]
+    try:
+        alle_pos = [x[0] for x in input]
+        alle_gruppen = [x[2].lower() for x in input]
 
-    alle_gruppen_alle_pos = {}
-    for i, position in enumerate(alle_pos):
-        bindung_pos = {alle_gruppen[i]: [int(x) for x in re.findall(r"\d", position)]}
-        alle_gruppen_alle_pos.update(bindung_pos)
+        alle_gruppen_alle_pos = {}
+        for i, position in enumerate(alle_pos):
+            bindung_pos = {alle_gruppen[i]: [int(x) for x in re.findall(r"\d", position)]}
+            alle_gruppen_alle_pos.update(bindung_pos)
 
-    return alle_gruppen_alle_pos
+        return alle_gruppen_alle_pos
+    except Exception as e:
+        print(f"Fehler in der dictionary Konvertierung:{e}")
 
 
 def stamm_kette(stamm, plotter, bindung_typ):
@@ -130,41 +133,45 @@ def stamm_kette(stamm, plotter, bindung_typ):
         return stamm_kette_punkte, alle_bindungen_alle_pos
 
     except Exception as e:
-        print(f"Fehler in der stamm_kette: {e}")
+        print(f"Fehler in der stamm_kette / Doppel- / Dreifachbindung: {e}")
 
 
 def bindung(stamm_kette_punkte, plotter, alle_bindungen_alle_pos, verschiebung_bindung=0.1, laenge_bindung=0.2):
-    for bindung in alle_bindungen_alle_pos:
-        for bindung_pos in alle_bindungen_alle_pos.get(bindung):
-            p1 = np.array(stamm_kette_punkte[bindung_pos - 1][:2])
-            p2 = np.array(stamm_kette_punkte[bindung_pos][:2])
+    try:
+        for bindung in alle_bindungen_alle_pos:
+            for bindung_pos in alle_bindungen_alle_pos.get(bindung):
+                p1 = np.array(stamm_kette_punkte[bindung_pos - 1][:2])
+                p2 = np.array(stamm_kette_punkte[bindung_pos][:2])
 
-            richtung = p2 - p1
+                richtung = p2 - p1
 
-            normale = np.array([-richtung[1], richtung[0]])
-            normale = normale / np.linalg.norm(normale)
+                normale = np.array([-richtung[1], richtung[0]])
+                normale = normale / np.linalg.norm(normale)
 
-            p1_verschoben_oben = (p1 + verschiebung_bindung * normale) + laenge_bindung * richtung
-            p2_verschoben_oben = (p2 + verschiebung_bindung * normale) - laenge_bindung * richtung
+                p1_verschoben_oben = (p1 + verschiebung_bindung * normale) + laenge_bindung * richtung
+                p2_verschoben_oben = (p2 + verschiebung_bindung * normale) - laenge_bindung * richtung
 
-            alken_punkte = np.array([
-                np.array([p1_verschoben_oben[0], p1_verschoben_oben[1], 0]),
-                np.array([p2_verschoben_oben[0], p2_verschoben_oben[1], 0])
-            ])
-            if bindung == "in":
-                p1_verschoben_unten = (p1 - verschiebung_bindung * normale) + laenge_bindung * richtung
-                p2_verschoben_unten = (p2 - verschiebung_bindung * normale) - laenge_bindung * richtung
-
-                alkin_punkte = np.array([
-                    np.array([p1_verschoben_unten[0], p1_verschoben_unten[1], 0]),
-                    np.array([p2_verschoben_unten[0], p2_verschoben_unten[1], 0])
+                alken_punkte = np.array([
+                    np.array([p1_verschoben_oben[0], p1_verschoben_oben[1], 0]),
+                    np.array([p2_verschoben_oben[0], p2_verschoben_oben[1], 0])
                 ])
+                if bindung == "in":
+                    p1_verschoben_unten = (p1 - verschiebung_bindung * normale) + laenge_bindung * richtung
+                    p2_verschoben_unten = (p2 - verschiebung_bindung * normale) - laenge_bindung * richtung
 
-                alkin_kette = pv.lines_from_points(alkin_punkte)
-                plotter.add_mesh(alkin_kette, line_width=2, color=(255, 0, 0))
+                    alkin_punkte = np.array([
+                        np.array([p1_verschoben_unten[0], p1_verschoben_unten[1], 0]),
+                        np.array([p2_verschoben_unten[0], p2_verschoben_unten[1], 0])
+                    ])
 
-            alken_kette = pv.lines_from_points(alken_punkte)
-            plotter.add_mesh(alken_kette, line_width=2, color=(255, 0, 0))
+                    alkin_kette = pv.lines_from_points(alkin_punkte)
+                    plotter.add_mesh(alkin_kette, line_width=2, color=(255, 0, 0))
+
+                alken_kette = pv.lines_from_points(alken_punkte)
+                plotter.add_mesh(alken_kette, line_width=2, color=(255, 0, 0))
+
+    except Exception as e:
+        print(f"Fehler in der Darstellung der Bindung:{e}")
 
 
 def alkan_substituent(stamm_kette_punkte, substituent, plotter):
@@ -222,111 +229,140 @@ def alkan_substituent(stamm_kette_punkte, substituent, plotter):
 
 
 def element_substituent(stamm_kette_punkte, substituent_element, plotter):
-    # Name, Farbe, Grösse
-    element_zeichnung = {
-        "wasserstoff":("H","#d9e4ea",20),
-        "sauerstoff":("O","#ec0c0d", 40),
-        "fluor": ('F', "#FFD1DC", 40),
-        "chlor": ('Cl', "#228B22", 50),
-        "brom": ('Br', "#CC5500", 60),
-        "iod": ('I', "#9D00FF", 70)
-    }
+    try:
+        # Name, Farbe, Grösse
+        element_zeichnung = {
+            "wasserstoff": ("H", "#d9e4ea", 20),
+            "sauerstoff": ("O", "#ec0c0d", 40),
+            "fluor": ('F', "#FFD1DC", 40),
+            "chlor": ('Cl', "#228B22", 50),
+            "brom": ('Br', "#CC5500", 60),
+            "iod": ('I', "#9D00FF", 70)
+        }
 
-    alle_sub_alle_pos = dic_converter(substituent_element)
+        alle_sub_alle_pos = dic_converter(substituent_element)
 
-    for element in alle_sub_alle_pos:
-        for sub_pos in alle_sub_alle_pos.get(element):
-            vorzeichen = -1 if sub_pos in besetzt_liste else 1
-            y_formel = 1.5 if sub_pos % 2 == 0 else -0.5
+        for element in alle_sub_alle_pos:
+            for sub_pos in alle_sub_alle_pos.get(element):
+                vorzeichen = -1 if sub_pos in besetzt_liste else 1
+                y_formel = 1.5 if sub_pos % 2 == 0 else -0.5
 
-            element_verbindung_punkte = np.array([
-                np.array([stamm_kette_punkte[sub_pos - 1][0], stamm_kette_punkte[sub_pos - 1][1], 0]),
-                np.array([stamm_kette_punkte[sub_pos - 1][0] + vorzeichen * -0.25, y_formel, 0])
-            ])
-
-            besetzt_liste.append(sub_pos)
-            verbindung_element = pv.lines_from_points(element_verbindung_punkte)
-            plotter.add_mesh(verbindung_element, line_width=2)
-
-            element_lower = element.lower()
-            zeichnung_pos = np.array([[stamm_kette_punkte[sub_pos - 1][0] + vorzeichen * -0.25,
-                                       y_formel, 0]])
-
-            text, color, point_size = element_zeichnung[element_lower]
-
-            plotter.add_point_labels(
-                points=zeichnung_pos,
-                labels=[text],
-                font_size=40,
-                point_color=color,
-                point_size=point_size,
-                render_points_as_spheres=True,
-                always_visible=True,
-                shape=None
-            )
-
-
-def rest_substituent(stamm_kette_punkte, substituent_rest, plotter):
-    #phenyl | hydroxy | amino | oxo | formyl
-    alle_rest_sub_alle_pos = dic_converter(substituent_rest)
-
-    for substituent in alle_rest_sub_alle_pos:
-        for sub_pos in alle_rest_sub_alle_pos.get(substituent):
-            vorzeichen = -1 if sub_pos in besetzt_liste else 1
-            y_formel = 1.5 if sub_pos % 2 == 0 else -0.5
-
-            # die nachfolgenden Zahlen sind zufällig gewählt, sieht einfach am besten aus
-            if substituent == "phenyl":
-                sub_verbindung_punkte = np.array([
+                element_verbindung_punkte = np.array([
                     np.array([stamm_kette_punkte[sub_pos - 1][0], stamm_kette_punkte[sub_pos - 1][1], 0]),
                     np.array([stamm_kette_punkte[sub_pos - 1][0] + vorzeichen * -0.25, y_formel, 0])
                 ])
-                endpunkt = sub_verbindung_punkte[1]
 
                 besetzt_liste.append(sub_pos)
-                verbindung_substituent = pv.lines_from_points(sub_verbindung_punkte)
-                plotter.add_mesh(verbindung_substituent, line_width=2)
+                verbindung_element = pv.lines_from_points(element_verbindung_punkte)
+                plotter.add_mesh(verbindung_element, line_width=2)
 
-                phenyl = pv.Polygon(center=(endpunkt[0], endpunkt[1] + 0.5 if sub_pos % 2 == 0 else endpunkt[1] - 0.5, 0), radius=0.5, fill=False)
-                plotter.add_mesh(phenyl, line_width=2, color=(0, 0, 0))
-                punkte = phenyl.points
+                element_lower = element.lower()
+                zeichnung_pos = np.array([[stamm_kette_punkte[sub_pos - 1][0] + vorzeichen * -0.25,
+                                           y_formel, 0]])
 
-                bindung(punkte, plotter, alle_bindungen_alle_pos={"en":(1,3,5)}, verschiebung_bindung=-0.05, laenge_bindung=0.008)
+                text, color, point_size = element_zeichnung[element_lower]
 
-            if substituent == "hydroxy":
-                substituent_element_sauerstoff = [(str(sub_pos), '', 'sauerstoff')] # der dic_converter nimmt die position nur als string entgegen
-                element_substituent(stamm_kette_punkte, substituent_element_sauerstoff, plotter)
+                plotter.add_point_labels(
+                    points=zeichnung_pos,
+                    labels=[text],
+                    font_size=40,
+                    point_color=color,
+                    point_size=point_size,
+                    render_points_as_spheres=True,
+                    always_visible=True,
+                    shape=None
+                )
+    except Exception as e:
+        print(f"Fehler in der Darstellung der Elemente")
 
-                wasserstoff_anfangspunkt = np.array([
-                    np.array([0,0,0]),
-                    np.array([stamm_kette_punkte[sub_pos - 1][0] - 0.25, y_formel, 0])
-                ])
 
-                substituent_element_wasserstoff = [(str(2), '', 'wasserstoff')]
-                element_substituent(wasserstoff_anfangspunkt, substituent_element_wasserstoff, plotter)
+def rest_substituent(stamm_kette_punkte, substituent_rest, plotter):
+    try:
+        # phenyl | hydroxy | amino | oxo | formyl
+        alle_rest_sub_alle_pos = dic_converter(substituent_rest)
 
-            if substituent == "amino":
-                pass
+        for substituent in alle_rest_sub_alle_pos:
+            for sub_pos in alle_rest_sub_alle_pos.get(substituent):
+                vorzeichen = -1 if sub_pos in besetzt_liste else 1
+                y_formel = 1.5 if sub_pos % 2 == 0 else -0.5
 
-            if substituent == "oxo":
-                pass
+                # die nachfolgenden Zahlen sind zufällig gewählt, sieht einfach am besten aus
+                if substituent == "phenyl":
+                    sub_verbindung_punkte = np.array([
+                        np.array([stamm_kette_punkte[sub_pos - 1][0], stamm_kette_punkte[sub_pos - 1][1], 0]),
+                        np.array([stamm_kette_punkte[sub_pos - 1][0] + vorzeichen * -0.25, y_formel, 0])
+                    ])
+                    endpunkt = sub_verbindung_punkte[1]
 
-            if substituent == "formyl":
-                pass
+                    besetzt_liste.append(sub_pos)
+                    verbindung_substituent = pv.lines_from_points(sub_verbindung_punkte)
+                    plotter.add_mesh(verbindung_substituent, line_width=2)
+
+                    phenyl = pv.Polygon(
+                        center=(endpunkt[0], endpunkt[1] + 0.5 if sub_pos % 2 == 0 else endpunkt[1] - 0.5, 0),
+                        radius=0.5,
+                        fill=False)
+                    plotter.add_mesh(phenyl, line_width=2, color=(0, 0, 0))
+                    punkte = phenyl.points
+
+                    bindung(punkte, plotter, alle_bindungen_alle_pos={"en": (1, 3, 5)}, verschiebung_bindung=-0.05,
+                            laenge_bindung=0.008)
+
+                if substituent == "hydroxy":
+                    substituent_element_sauerstoff = [
+                        (
+                        str(sub_pos), '', 'sauerstoff')]  # der dic_converter nimmt die position nur als string entgegen
+                    element_substituent(stamm_kette_punkte, substituent_element_sauerstoff, plotter)
+
+                    wasserstoff_verbindung_punkte = np.array([
+                        np.array([stamm_kette_punkte[sub_pos - 1][0] - 0.25, y_formel, 0]),
+                        np.array([stamm_kette_punkte[sub_pos - 1][0] - 0.25,
+                                  y_formel + 0.3 if sub_pos % 2 == 0 else y_formel - 0.3, 0])
+                    ])
+
+                    wasserstoff_verbindung_linie = pv.lines_from_points(wasserstoff_verbindung_punkte)
+                    plotter.add_mesh(wasserstoff_verbindung_linie, line_width=2)
+
+                    plotter.add_point_labels(
+                        points=[wasserstoff_verbindung_punkte[1]],
+                        labels=["H"],
+                        font_size=40,
+                        point_color="#d9e4ea",
+                        point_size=20,
+                        render_points_as_spheres=True,
+                        always_visible=True,
+                        shape=None
+                    )
+                if substituent == "amino":
+                    pass
+
+                if substituent == "oxo":
+                    pass
+
+                if substituent == "formyl":
+                    pass
+
+    except Exception as e:
+        print(f"Fehler in der Dastellung der restlichen Substituenten: {e}")
+
 
 def darsteller(stereo, substituent_alkan, substituent_halogen, substituent_rest, isCyclo, stamm, bindung_typ,
                endung_saeure_al, endung_rest, plotter):
-    plotter.clear()
+    try:
+        plotter.clear()
 
-    stamm_kette_punkte, alle_bindungen_alle_pos = stamm_kette(stamm, plotter, bindung_typ)
-    bindung(stamm_kette_punkte, plotter, alle_bindungen_alle_pos)
-    alkan_substituent(stamm_kette_punkte, substituent_alkan, plotter)
-    element_substituent(stamm_kette_punkte, substituent_halogen, plotter)
-    rest_substituent(stamm_kette_punkte, substituent_rest, plotter)
+        stamm_kette_punkte, alle_bindungen_alle_pos = stamm_kette(stamm, plotter, bindung_typ)
+        bindung(stamm_kette_punkte, plotter, alle_bindungen_alle_pos)
+        alkan_substituent(stamm_kette_punkte, substituent_alkan, plotter)
+        element_substituent(stamm_kette_punkte, substituent_halogen, plotter)
+        rest_substituent(stamm_kette_punkte, substituent_rest, plotter)
 
-    plotter.add_axes()
-    plotter.camera_position = "xy"
-    plotter.render()
+        plotter.add_axes()
+        plotter.camera_position = "xy"
+        plotter.render()
+
+    except Exception as e:
+        print(f"Fehler im Darsteller: {e}")
 
 
 class MainWindow(QMainWindow):
@@ -387,7 +423,8 @@ class MainWindow(QMainWindow):
         )
 
 
-app = QApplication([])
-window = MainWindow()
-window.show()
-app.exec_()
+if __name__ == "__main__":
+    app = QApplication([])
+    window = MainWindow()
+    window.show()
+    app.exec_()
