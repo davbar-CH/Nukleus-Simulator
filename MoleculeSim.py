@@ -310,14 +310,13 @@ def rest_substituent(stamm_kette_punkte, substituent_rest, plotter):
 
                 if substituent == "hydroxy":
                     substituent_element_sauerstoff = [
-                        (
-                        str(sub_pos), '', 'sauerstoff')]  # der dic_converter nimmt die position nur als string entgegen
+                        (str(sub_pos), '', 'sauerstoff')]  # der dic_converter nimmt die position nur als string entgegen
                     element_substituent(stamm_kette_punkte, substituent_element_sauerstoff, plotter)
 
                     wasserstoff_verbindung_punkte = np.array([
-                        np.array([stamm_kette_punkte[sub_pos - 1][0] - 0.25, y_formel, 0]),
-                        np.array([stamm_kette_punkte[sub_pos - 1][0] - 0.25,
-                                  y_formel + 0.3 if sub_pos % 2 == 0 else y_formel - 0.3, 0])
+                        np.array([stamm_kette_punkte[sub_pos - 1][0] - vorzeichen*0.25, y_formel, 0]),
+                        np.array([stamm_kette_punkte[sub_pos - 1][0] - vorzeichen*0.25,
+                                  y_formel + 0.2 if sub_pos % 2 == 0 else y_formel - 0.2, 0])
                     ])
 
                     wasserstoff_verbindung_linie = pv.lines_from_points(wasserstoff_verbindung_punkte)
@@ -333,8 +332,31 @@ def rest_substituent(stamm_kette_punkte, substituent_rest, plotter):
                         always_visible=True,
                         shape=None
                     )
+
                 if substituent == "amino":
-                    pass
+                    substituent_element_stickstoff = [
+                        (str(sub_pos), '', 'stickstoff')]
+                    element_substituent(stamm_kette_punkte, substituent_element_stickstoff, plotter)
+
+                    wasserstoff_verbindung_punkte = np.array([
+                        np.array([stamm_kette_punkte[sub_pos - 1][0] - vorzeichen * 0.25, y_formel, 0]),
+                        np.array([stamm_kette_punkte[sub_pos - 1][0] - vorzeichen * 0.25,
+                                  y_formel + 0.2 if sub_pos % 2 == 0 else y_formel - 0.2, 0])
+                    ])
+
+                    wasserstoff_verbindung_linie = pv.lines_from_points(wasserstoff_verbindung_punkte)
+                    plotter.add_mesh(wasserstoff_verbindung_linie, line_width=2)
+
+                    plotter.add_point_labels(
+                        points=[wasserstoff_verbindung_punkte[1]],
+                        labels=["H"],
+                        font_size=40,
+                        point_color="#d9e4ea",
+                        point_size=20,
+                        render_points_as_spheres=True,
+                        always_visible=True,
+                        shape=None
+                    )
 
                 if substituent == "oxo":
                     pass
