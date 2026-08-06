@@ -1,6 +1,5 @@
 import pyvista as pv
 import pyvistaqt as pvqt
-from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import *
 import numpy as np
@@ -122,8 +121,12 @@ def stamm_kette(stamm, plotter, dehnung_x=0.5, dehnung_y=2):
         besetzt_liste = []
 
         stamm = stamm[0].lower()
-        stamm_kette_punkte = np.array(
-            [[x * dehnung_x, (1 - (-1) ** x) / dehnung_y, 0] for x in range(0, stamm_laenge.get(stamm))])
+        if stamm_laenge.get(stamm):
+            laenge = stamm_laenge.get(stamm)
+            stamm_kette_punkte = np.array(
+                [[x * dehnung_x, (1 - (-1) ** x) / dehnung_y, 0] for x in range(0, laenge)])
+        else:
+            print(f"Keine solche Stammkette{stamm}")
 
         for kohlenstoff in stamm_kette_punkte:
             punkt = pv.Sphere(radius=0.04, center=kohlenstoff)
@@ -388,7 +391,8 @@ def alkohol_substituent(stamm_kette_punkte, alkohol_input, plotter, verbindung_d
         print(f"Fehler in der Darstellung vom Alkohol: {e}")
 
 
-def amino_substituent(stamm_kette_punkte, amin_input, plotter, verbindung_dehnung_x=0.25, verbindung_dehnung_y=1.5,
+def amino_substituent(stamm_kette_punkte, amin_input, plotter,
+                      verbindung_dehnung_x=0.25, verbindung_dehnung_y=1.5,
                       verschiebung_H=0.2):
     try:
         alle_amin_alle_pos = dic_converter(amin_input)
@@ -503,6 +507,12 @@ class MainWindow(QMainWindow):
         self.textbox = QTextEdit(self)
         layout_horizontal.addWidget(self.textbox)
         self.textbox.setFont(QFont('Gill Sans MT', 15))
+
+        self.plot_slider = pvqt.QtInteractor(self)
+        layout_horizontal.addWidget(self.plot_slider)
+        self.circle = pv.Circle()
+        self.circle.rotate_z(90,inplace=False)
+        self.plot_slider.add_mesh(self.circle, style='wireframe')
 
         """self.label_x_dehnung = QLabel("Dehnung der Verbindung in x-Richtung")
         layout_horizontal.addWidget(self.label_x_dehnung)
