@@ -80,16 +80,22 @@ def substituent_verbindung(stamm_kette_punkte, substituent_dic, plotter, verbind
                            verbindung_dehnung_y=1.5):
     try:
         endpunkt_liste = []
+        radius = 1
 
         for substituent in substituent_dic:
             for sub_pos in substituent_dic.get(substituent):
                 vorzeichen = -1 if sub_pos in besetzt_liste else 1
-                y_formel = verbindung_dehnung_y if sub_pos % 2 == 0 else verbindung_dehnung_y - 2
+                mittelpunkt_x = stamm_kette_punkte[sub_pos - 1][0]
+                mittelpunkt_y = stamm_kette_punkte[sub_pos - 1][1]
+                print(mittelpunkt_x, mittelpunkt_y)
+                punkt_y = 1.5
+                punkt_x = np.sqrt(radius ** 2 - (punkt_y - mittelpunkt_y) ** 2) + mittelpunkt_x
 
                 substituent_verbindung_punkte = np.array([
-                    np.array([stamm_kette_punkte[sub_pos - 1][0], stamm_kette_punkte[sub_pos - 1][1], 0]),
-                    np.array([stamm_kette_punkte[sub_pos - 1][0] + vorzeichen * -verbindung_dehnung_x, y_formel, 0])
+                    np.array([mittelpunkt_x, mittelpunkt_y, 0]),
+                    np.array([punkt_x, punkt_y, 0])
                 ])
+
                 endpunkt = [substituent_verbindung_punkte[1], sub_pos - 1, substituent]
                 endpunkt_liste.append(endpunkt)
 
@@ -461,6 +467,8 @@ def säure_substituent(stamm_kette_punkte, säure_input, plotter, verbindung_deh
             koordinaten = endpunkt[0]
             position_kette = endpunkt[1]
 
+
+
     except Exception as e:
         print(f"Fehler in der Darstellung der Säure / des Aldehyds: {e}")
 
@@ -505,14 +513,16 @@ class MainWindow(QMainWindow):
         layout_horizontal = QHBoxLayout()
 
         self.textbox = QTextEdit(self)
-        layout_horizontal.addWidget(self.textbox)
+        layout_horizontal.addWidget(self.textbox, stretch=3)
         self.textbox.setFont(QFont('Gill Sans MT', 15))
 
         self.plot_slider = pvqt.QtInteractor(self)
-        layout_horizontal.addWidget(self.plot_slider)
-        self.circle = pv.Circle()
-        self.circle.rotate_z(90,inplace=False)
-        self.plot_slider.add_mesh(self.circle, style='wireframe')
+        layout_horizontal.addWidget(self.plot_slider, stretch=1)
+        center = [0,0,0]
+        normale = [1,1,1]
+
+        self.disc = pv.Disc(center=center, normal=normale, c_res=50)
+        self.plot_slider.add_mesh(self.disc, style='wireframe', line_width=4)
 
         """self.label_x_dehnung = QLabel("Dehnung der Verbindung in x-Richtung")
         layout_horizontal.addWidget(self.label_x_dehnung)
