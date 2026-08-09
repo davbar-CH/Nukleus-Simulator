@@ -47,7 +47,7 @@ def text_auslesen(input_text):
     bindung_pattern = rf"{zaehl_woerter_pattern}(en|in)(?!\w)"
     bindung_typ = re.findall(bindung_pattern, input_ohne_stereo_sub, flags=re.IGNORECASE)
 
-    saeure_pattern = r"(säure)"
+    saeure_pattern = r"(?:(\d+(?:,\d+)*)-)?(?:(di))?(säure)"
     saeure = re.findall(saeure_pattern, input_ohne_stereo_sub, flags=re.IGNORECASE)
 
     aldehyd_pattern = rf"{zaehl_woerter_pattern}(formyl|al)"
@@ -82,14 +82,14 @@ def substituent_verbindung(stamm_kette_punkte, substituent_dic, plotter, bindung
 
         for substituent in substituent_dic:
             for sub_pos in substituent_dic.get(substituent):
-                anfangspunkt = stamm_kette_punkte[sub_pos-1]
+                anfangspunkt = stamm_kette_punkte[sub_pos - 1]
                 vorzeichen = -1 if sub_pos in besetzt_liste else 1
                 y_formel = -1 if sub_pos // 2 == 1 else 1
 
                 substituent_verbindung_punkte = np.array([
                     anfangspunkt,
-                    np.array([anfangspunkt[0]+vorzeichen*(0.5*np.cos(bindung_verschiebung)),
-                              anfangspunkt[1]+vorzeichen*y_formel*(0.5*np.sin(bindung_verschiebung)),
+                    np.array([anfangspunkt[0] + vorzeichen * (0.5 * np.cos(bindung_verschiebung)),
+                              anfangspunkt[1] + vorzeichen * y_formel * (0.5 * np.sin(bindung_verschiebung)),
                               0])
                 ])
 
@@ -230,12 +230,14 @@ def alkan_substituent(stamm_kette_punkte, alkan_input, plotter, dehnung_x=8, deh
         pos = Position des Substituents, in der Form 1 oder 3,8
         sub = Substituent, in der Form Methyl oder methyl
 
-        Ist eine Position besetzt, dann wird das Vorzeichen gekehrt, damit die Substituenten trotzdem angezeigt werden können
+        Ist eine Position besetzt, dann wird das Vorzeichen gekehrt, 
+        damit die Substituenten trotzdem angezeigt werden können
 
         Bei ungeraden Positionen wird bei y=0 gestartet, bei geraden Positionen bei y=1
 
         Der Substituent startet bei der jeweiligen x-Koordinate (pos-1). Die x-Koordinate alterniert jeweils zwischen 
-        der x-Koordinate und x-Koordinate - 0.25. Die y-Koordinate wird stets um 0.5 grösser (bei geraden Positionen) bzw.
+        der x-Koordinate und x-Koordinate - 0.25. 
+        Die y-Koordinate wird stets um 0.5 grösser (bei geraden Positionen) bzw.
         um 0.5 kleiner bei ungeraden Positionen.
         """
         substituent_laenge = {
@@ -271,8 +273,8 @@ def alkan_substituent(stamm_kette_punkte, alkan_input, plotter, dehnung_x=8, deh
                 alkan_kette = pv.lines_from_points(sub_alkan_punkte)
                 plotter.add_mesh(alkan_kette, line_width=2, color=(0, 0, 0))
 
-    except:
-        print("Kein Alkan-Substituent")
+    except Exception as e:
+        print(f"Kein Alkan-Substituent: {e}")
 
 
 def halogen_substituent(stamm_kette_punkte, halogen_input, plotter, bindung_verschiebung):
@@ -360,8 +362,6 @@ def alkohol_substituent(stamm_kette_punkte, alkohol_input, plotter, bindung_vers
 
             wasserstoff_endpunkt = 2 * wasserstoff_anfangspunkt - stamm_kette_punkte[position_kette]
 
-            print(wasserstoff_anfangspunkt)
-            print(stamm_kette_punkte[position_kette])
             wasserstoff_verbindung_linie = pv.lines_from_points([wasserstoff_anfangspunkt, wasserstoff_endpunkt])
             plotter.add_mesh(wasserstoff_verbindung_linie, line_width=3)
             besetzt_liste.append(position_kette)
@@ -439,18 +439,20 @@ def amino_substituent(stamm_kette_punkte, amin_input, plotter,
         print(f"Fehler in der Darstellung vom Amin: {e}")
 
 
-def säure_substituent(stamm_kette_punkte, säure_input, plotter, verbindung_dehnung_x=0.25, verbindung_dehnung_y=1.5,
-                      verschiebung_H=0.2):
+def säure_substituent(stamm_kette_punkte, säure_input, plotter, bindung_verschiebung, verschiebung_H=0.2):
     try:
-        alle_säure_al_alle_pos = dic_converter(säure_input)
-        endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_säure_al_alle_pos, plotter,
-                                                verbindung_dehnung_x,
-                                                verbindung_dehnung_y)
+        alle_säure_alle_pos = dic_converter(säure_input)
+        zaehl_wort = säure_input[0][1]
+        if zaehl_wort == "di":
+            alle_säure_alle_pos["säure"] = [1, len(stamm_kette_punkte)]
+        else:
+            alle_säure_alle_pos["säure"] = [1]
 
-        for endpunkt in endpunkt_liste:
-            koordinaten = endpunkt[0]
-            position_kette = endpunkt[1]
-
+        endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_säure_alle_pos, plotter, bindung_verschiebung)
+        koordinaten = [endpunkt_liste[0][0], stamm_kette_punkte[0]]
+        print(koordinaten)
+        bindung_zeichnen(koordinaten, plotter, alle_bindungen_alle_pos={"en": (1,2)}, verschiebung_bindung=-0.05,
+                         laenge_bindung=0.008)
 
 
     except Exception as e:
@@ -473,6 +475,7 @@ def darsteller(stereo, alkan_input, halogen_input, phenyl_input, alkohol_input, 
             (phenyl_substituent, phenyl_input),
             (alkohol_substituent, alkohol_input),
             (amino_substituent, amin_input),
+            (säure_substituent, saeure_input)
         ]
 
         for funktion, text in substituenten:
@@ -540,7 +543,8 @@ class MainWindow(QMainWindow):
             print("Keine Eingabe")
             return
 
-        stereo, alkan_input, halogen_input, phenyl_input, alkohol_input, amin_input, is_cyclo, stamm, bindung_typ, saeure_input, aldehyd_input = resultat
+        (stereo, alkan_input, halogen_input, phenyl_input, alkohol_input, amin_input, is_cyclo, stamm, bindung_typ,
+         saeure_input, aldehyd_input) = resultat
         print(resultat)
 
         darsteller(
