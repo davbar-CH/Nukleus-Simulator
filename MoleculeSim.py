@@ -76,37 +76,7 @@ def dic_converter(input):
         print(f"Fehler in der dictionary Konvertierung:{e}")
 
 
-def substituent_verbindung(stamm_kette_punkte, substituent_dic, plotter, bindung_verschiebung):
-    try:
-        endpunkt_liste = []
-
-        for substituent in substituent_dic:
-            for sub_pos in substituent_dic.get(substituent):
-                anfangspunkt = stamm_kette_punkte[sub_pos - 1]
-                vorzeichen = -1 if sub_pos in besetzt_liste else 1
-                y_formel = -1 if sub_pos // 2 == 1 else 1
-
-                substituent_verbindung_punkte = np.array([
-                    anfangspunkt,
-                    np.array([anfangspunkt[0] + vorzeichen * (0.5 * np.cos(bindung_verschiebung)),
-                              anfangspunkt[1] + vorzeichen * y_formel * (0.5 * np.sin(bindung_verschiebung)),
-                              0])
-                ])
-
-                endpunkt = [substituent_verbindung_punkte[1], sub_pos - 1, substituent]
-                endpunkt_liste.append(endpunkt)
-
-                besetzt_liste.append(sub_pos)
-                verbindung_substituent = pv.lines_from_points(substituent_verbindung_punkte)
-                plotter.add_mesh(verbindung_substituent, line_width=2, color=(0, 0, 0))
-
-        return endpunkt_liste
-
-    except Exception as e:
-        print(f"Fehler in der Darstellung der Substituent-Verbindung: {e}")
-
-
-def stamm_kette(stamm, dehnung_x=0.5, dehnung_y=2):
+def stamm_kette(stamm_input, dehnung_x=0.5, dehnung_y=2):
     try:
         stamm_laenge = {
             "eth": 2,
@@ -122,10 +92,11 @@ def stamm_kette(stamm, dehnung_x=0.5, dehnung_y=2):
 
         global besetzt_liste
         besetzt_liste = []
+        stamm_kette_punkte = []
 
-        stamm = stamm[0].lower()
-        if stamm_laenge.get(stamm):
-            laenge = stamm_laenge.get(stamm)
+        stamm = stamm_input[0].lower()
+        laenge = stamm_laenge.get(stamm)
+        if laenge is not None:
             stamm_kette_punkte = np.array(
                 [[x * dehnung_x, (1 - (-1) ** x) / dehnung_y, 0] for x in range(0, laenge)])
         else:
@@ -137,12 +108,44 @@ def stamm_kette(stamm, dehnung_x=0.5, dehnung_y=2):
         print(f"Fehler in der stamm_kette: {e}")
 
 
-def stamm_anpassung(stamm_kette_punkte, plotter, bindung_typ):
+def substituent_verbindung(stamm_kette_punkte, substituent_dic, plotter, bindung_verschiebung):
     try:
-        alle_bindungen_alle_pos = dic_converter(bindung_typ)
+        endpunkt_liste = []
 
-        alle_positionen_en = alle_bindungen_alle_pos.get("en")
-        alle_positionen_in = alle_bindungen_alle_pos.get("in")
+        if substituent_dic is not None:
+            for substituent in substituent_dic:
+                for sub_pos in substituent_dic.get(substituent, {}):
+                    anfangspunkt = stamm_kette_punkte[sub_pos - 1]
+                    vorzeichen = -1 if sub_pos in besetzt_liste else 1
+                    y_formel = -1 if sub_pos % 2 == 0 else 1
+
+                    substituent_verbindung_punkte = np.array([
+                        anfangspunkt,
+                        np.array([anfangspunkt[0] + vorzeichen * (0.5 * np.cos(bindung_verschiebung)),
+                                  anfangspunkt[1] + vorzeichen * y_formel * (0.5 * np.sin(bindung_verschiebung)),
+                                  0])
+                    ])
+
+                    endpunkt = [substituent_verbindung_punkte[1], sub_pos - 1, substituent]
+                    endpunkt_liste.append(endpunkt)
+
+                    besetzt_liste.append(sub_pos)
+                    verbindung_substituent = pv.lines_from_points(substituent_verbindung_punkte)
+                    plotter.add_mesh(verbindung_substituent, line_width=2, color=(0, 0, 0))
+            return endpunkt_liste
+
+        else:
+            return []
+
+
+    except Exception as e:
+        print(f"Fehler in der Darstellung der Substituent-Verbindung: {e}")
+
+
+def stamm_anpassung(stamm_kette_punkte, plotter, alle_bindungen_alle_pos):
+    try:
+        alle_positionen_en = alle_bindungen_alle_pos.get("en", {})
+        alle_positionen_in = alle_bindungen_alle_pos.get("in", {})
 
         if alle_positionen_en:
             for i, pos in enumerate(alle_positionen_en):
@@ -172,9 +175,6 @@ def stamm_anpassung(stamm_kette_punkte, plotter, bindung_typ):
 
                 stamm_kette_punkte[pos - 1][1] = new_val
                 stamm_kette_punkte[pos][1] = new_val
-
-        else:
-            print("Keine Bindung")
 
         stamm_kette = pv.lines_from_points(stamm_kette_punkte)
         plotter.add_mesh(stamm_kette, line_width=4, color=(0, 0, 0))
@@ -255,8 +255,11 @@ def alkan_substituent(stamm_kette_punkte, alkan_input, plotter, dehnung_x=8, deh
 
         alle_alkane_alle_pos = dic_converter(alkan_input)
 
+        if alle_alkane_alle_pos is None:
+            alle_alkane_alle_pos = {}
+
         for alkan in alle_alkane_alle_pos:
-            for sub_pos in alle_alkane_alle_pos.get(alkan):
+            for sub_pos in alle_alkane_alle_pos.get(alkan, {}):
                 vorzeichen = -1 if sub_pos in besetzt_liste else 1
                 y_formel = (lambda x: (x + 2) * dehnung_y) if sub_pos % 2 == 0 else (lambda x: x * -dehnung_y)
                 laenge = substituent_laenge.get(alkan) + 1
@@ -288,8 +291,15 @@ def halogen_substituent(stamm_kette_punkte, halogen_input, plotter, bindung_vers
         }
 
         alle_halogene_alle_pos = dic_converter(halogen_input)
+
+        if alle_halogene_alle_pos is None:
+            alle_halogene_alle_pos = {}
+
         endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_halogene_alle_pos, plotter,
                                                 bindung_verschiebung)
+
+        if endpunkt_liste is None:
+            endpunkt_liste = []
 
         for endpunkt in endpunkt_liste:
             halogen = endpunkt[2]
@@ -315,8 +325,13 @@ def phenyl_substituent(stamm_kette_punkte, phenyl_input, plotter, bindung_versch
     try:
         alle_phenyl_sub_alle_pos = dic_converter(phenyl_input)
 
+        if alle_phenyl_sub_alle_pos is None:
+            alle_phenyl_sub_alle_pos = {}
+
         endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_phenyl_sub_alle_pos, plotter,
                                                 bindung_verschiebung)
+        if endpunkt_liste is None:
+            endpunkt_liste = []
 
         for endpunkt in endpunkt_liste:
             koordinaten = endpunkt[0]
@@ -338,12 +353,17 @@ def phenyl_substituent(stamm_kette_punkte, phenyl_input, plotter, bindung_versch
         print(f"Fehler in der Darstellung von Phenyl: {e}")
 
 
-def alkohol_substituent(stamm_kette_punkte, alkohol_input, plotter, bindung_verschiebung, verschiebung_H=0.2):
+def alkohol_substituent(stamm_kette_punkte, alkohol_input, plotter, bindung_verschiebung, verschiebung_h=0.2):
     try:
         alle_alkohol_alle_pos = dic_converter(alkohol_input)
 
+        if alle_alkohol_alle_pos is None:
+            alle_alkohol_alle_pos = {}
+
         endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_alkohol_alle_pos, plotter,
                                                 bindung_verschiebung)
+        if endpunkt_liste is None:
+            endpunkt_liste = []
 
         for endpunkt in endpunkt_liste:
             wasserstoff_anfangspunkt = endpunkt[0]
@@ -382,10 +402,17 @@ def alkohol_substituent(stamm_kette_punkte, alkohol_input, plotter, bindung_vers
 
 
 def amino_substituent(stamm_kette_punkte, amin_input, plotter,
-                      bindung_verschiebung, verschiebung_H=0.2):
+                      bindung_verschiebung, verschiebung_h=0.2):
     try:
         alle_amin_alle_pos = dic_converter(amin_input)
+
+        if alle_amin_alle_pos is None:
+            alle_amin_alle_pos = {}
+
         endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_amin_alle_pos, plotter, bindung_verschiebung)
+
+        if endpunkt_liste is None:
+            endpunkt_liste = []
 
         for endpunkt in endpunkt_liste:
             koordinaten = endpunkt[0]
@@ -409,13 +436,13 @@ def amino_substituent(stamm_kette_punkte, amin_input, plotter,
             wasserstoff_verbindung_punkte_links = np.array([
                 koordinaten,
                 np.array([stamm_kette_punkte[position_kette][0] + vorzeichen * -bindung_verschiebung,
-                          y_formel - verschiebung_H if position_kette % 2 == 0 else y_formel + verschiebung_H, 0])
+                          y_formel - verschiebung_h if position_kette % 2 == 0 else y_formel + verschiebung_h, 0])
             ])
 
             wasserstoff_verbindung_punkte_rechts = np.array([
                 koordinaten,
                 np.array([2 * koordinaten[0] - wasserstoff_verbindung_punkte_links[1][0],
-                          y_formel - verschiebung_H if position_kette % 2 == 0 else y_formel + verschiebung_H, 0])
+                          y_formel - verschiebung_h if position_kette % 2 == 0 else y_formel + verschiebung_h, 0])
             ])
 
             wasserstoff_verbindung_linie_links = pv.lines_from_points(wasserstoff_verbindung_punkte_links)
@@ -439,19 +466,20 @@ def amino_substituent(stamm_kette_punkte, amin_input, plotter,
         print(f"Fehler in der Darstellung vom Amin: {e}")
 
 
-def säure_substituent(stamm_kette_punkte, säure_input, plotter, bindung_verschiebung, verschiebung_H=0.2):
+def saeure_substituent(stamm_kette_punkte, saeure_input, plotter, bindung_verschiebung, verschiebung_h=0.2):
     try:
-        alle_säure_alle_pos = dic_converter(säure_input)
-        zaehl_wort = säure_input[0][1]
+        alle_saeure_alle_pos = dic_converter(saeure_input)
+        zaehl_wort = saeure_input[0][1]
         if zaehl_wort == "di":
-            alle_säure_alle_pos["säure"] = [1, len(stamm_kette_punkte)]
+            alle_saeure_alle_pos["säure"] = [1, len(stamm_kette_punkte)]
         else:
-            alle_säure_alle_pos["säure"] = [1]
+            alle_saeure_alle_pos["säure"] = [1]
 
-        endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_säure_alle_pos, plotter, bindung_verschiebung)
-        koordinaten = [endpunkt_liste[0][0], stamm_kette_punkte[0]]
-        print(koordinaten)
-        bindung_zeichnen(koordinaten, plotter, alle_bindungen_alle_pos={"en": (1,2)}, verschiebung_bindung=-0.05,
+        endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_saeure_alle_pos, plotter, bindung_verschiebung)
+        verbindung_koordinaten = [endpunkt_liste[0][0], stamm_kette_punkte[0]]
+        print(verbindung_koordinaten)
+        bindung_zeichnen(verbindung_koordinaten, plotter, alle_bindungen_alle_pos={"en": (1, 2)},
+                         verschiebung_bindung=-0.05,
                          laenge_bindung=0.008)
 
 
@@ -459,15 +487,22 @@ def säure_substituent(stamm_kette_punkte, säure_input, plotter, bindung_versch
         print(f"Fehler in der Darstellung der Säure / des Aldehyds: {e}")
 
 
-def darsteller(stereo, alkan_input, halogen_input, phenyl_input, alkohol_input, amin_input, is_cyclo, stamm,
+def darsteller(stereo, alkan_input, halogen_input, phenyl_input, alkohol_input, amin_input, is_cyclo, stamm_input,
                bindung_typ,
                saeure_input, aldehyd_input, plotter, bindung_verschiebung):
     try:
         plotter.clear()
         bindung_verschiebung = -np.deg2rad(bindung_verschiebung) - (np.pi / 2)
-        stamm_kette_punkte = stamm_kette(stamm)
-        alle_bindungen_alle_pos = stamm_anpassung(stamm_kette_punkte, plotter, bindung_typ)
-        bindung_zeichnen(stamm_kette_punkte, plotter, alle_bindungen_alle_pos)
+        stamm_kette_punkte = stamm_kette(stamm_input)
+
+        if stamm_kette_punkte is not None:
+            alle_bindungen_alle_pos = dic_converter(bindung_typ)
+            if alle_bindungen_alle_pos is not None:
+                stamm_anpassung(stamm_kette_punkte, plotter, alle_bindungen_alle_pos)
+                bindung_zeichnen(stamm_kette_punkte, plotter, alle_bindungen_alle_pos)
+
+        else:
+            print("Fehler in der Stammkette, setze fort")
 
         substituenten = [
             (alkan_substituent, alkan_input),
@@ -475,7 +510,7 @@ def darsteller(stereo, alkan_input, halogen_input, phenyl_input, alkohol_input, 
             (phenyl_substituent, phenyl_input),
             (alkohol_substituent, alkohol_input),
             (amino_substituent, amin_input),
-            (säure_substituent, saeure_input)
+            (saeure_substituent, saeure_input)
         ]
 
         for funktion, text in substituenten:
@@ -501,7 +536,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Molekül Simulation")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 2200, 2000)
 
         layout_vertikal = QVBoxLayout()
         layout_horizontal = QHBoxLayout()
