@@ -1,0 +1,6 @@
+from .AlkanSubstituent import alkan_substituent
+from .AlkoholSubstituent import alkohol_substituent
+from .AminoSubstituent import amino_substituent
+from .HalogenSubstituent import halogen_substituent
+from .PhenylSubstituent import phenyl_substituent
+from .SaeureSubstituent import saeure_substituent
