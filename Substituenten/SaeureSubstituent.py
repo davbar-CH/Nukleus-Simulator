@@ -2,13 +2,9 @@ from HelferGeometrie import *
 from InputParser import dic_converter
 from Substituenten import alkohol_substituent
 
-def _saeure_endpunkt_zeichnen(stamm_kette_punkte, position, alle_saeure_alle_pos,
-                              plotter, verschiebung_sauerstoff, verschiebung_alkohol_ende,
+def sauerstoff_doppelbindung(stamm_kette_punkte, position, alle_saeure_alle_pos,
+                              plotter, verschiebung_sauerstoff,
                               besetzt_liste):
-    """Setzt den OH-Substituenten an `position`, verbindet ihn mit dem Stamm
-    und zeichnet die C=O-Doppelbindung samt O-Label."""
-    alkohol_substituent(stamm_kette_punkte, [(str(position), "", "ol")], plotter,
-                        verschiebung_alkohol_ende, besetzt_liste)
     besetzt_liste.remove(position)
 
     endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_saeure_alle_pos, plotter,
@@ -40,13 +36,17 @@ def saeure_substituent(stamm_kette_punkte, saeure_input, plotter, bindung_versch
             alle_saeure_alle_pos["säure"] = [letzte_position]
             verschiebung_alkohol_ende = (bindung_verschiebung + 90 if letzte_position % 2 == 0
                                   else bindung_verschiebung - 180)
-            _saeure_endpunkt_zeichnen(stamm_kette_punkte, letzte_position, alle_saeure_alle_pos,
-                                       plotter, verschiebung_sauerstoff, verschiebung_alkohol_ende, besetzt_liste)
+            alkohol_substituent(stamm_kette_punkte, [(str(letzte_position), "", "ol")], plotter,
+                                verschiebung_alkohol_ende, besetzt_liste)
+            sauerstoff_doppelbindung(stamm_kette_punkte, letzte_position, alle_saeure_alle_pos,
+                                       plotter, verschiebung_sauerstoff, besetzt_liste)
 
         alle_saeure_alle_pos["säure"] = [1]
         verschiebung_alkohol_ende = bindung_verschiebung - 90
-        _saeure_endpunkt_zeichnen(stamm_kette_punkte, 1, alle_saeure_alle_pos,
-                                   plotter, verschiebung_sauerstoff, verschiebung_alkohol_ende, besetzt_liste)
+        alkohol_substituent(stamm_kette_punkte, [(str(1), "", "ol")], plotter,
+                            verschiebung_alkohol_ende, besetzt_liste)
+        sauerstoff_doppelbindung(stamm_kette_punkte, 1, alle_saeure_alle_pos,
+                                   plotter, verschiebung_sauerstoff, besetzt_liste)
 
     except Exception as e:
-        print(f"Fehler in der Darstellung der Säure / des Aldehyds: {e}")
+        print(f"Fehler in der Darstellung der Säure: {e}")

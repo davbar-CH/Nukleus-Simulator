@@ -4,3 +4,5 @@ from .AminoSubstituent import amino_substituent
 from .HalogenSubstituent import halogen_substituent
 from .PhenylSubstituent import phenyl_substituent
 from .SaeureSubstituent import saeure_substituent
+from .SaeureSubstituent import sauerstoff_doppelbindung
+from .AldehydSubstituent import aldehyd_substituent
