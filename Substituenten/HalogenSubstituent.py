@@ -1,5 +1,5 @@
 from InputParser import dic_converter
-from HelferGeometrie import _substituent_verbindung
+from HelferGeometrie import substituent_verbindung
 
 def halogen_substituent(stamm_kette_punkte, halogen_input, plotter, bindung_verschiebung, besetzt_liste):
     try:
@@ -16,7 +16,7 @@ def halogen_substituent(stamm_kette_punkte, halogen_input, plotter, bindung_vers
         if alle_halogene_alle_pos is None:
             alle_halogene_alle_pos = {}
 
-        endpunkt_liste = _substituent_verbindung(stamm_kette_punkte, alle_halogene_alle_pos, plotter,
+        endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_halogene_alle_pos, plotter,
                                                 bindung_verschiebung, besetzt_liste)
 
         if endpunkt_liste is None:

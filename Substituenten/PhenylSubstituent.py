@@ -1,5 +1,5 @@
 from InputParser import dic_converter
-from HelferGeometrie import _substituent_verbindung, bindung_zeichnen
+from HelferGeometrie import substituent_verbindung, bindung_zeichnen
 from pyvista import Polygon
 
 def phenyl_substituent(stamm_kette_punkte, phenyl_input, plotter, bindung_verschiebung, besetzt_liste, phenyl_groesse=0.5):
@@ -9,7 +9,7 @@ def phenyl_substituent(stamm_kette_punkte, phenyl_input, plotter, bindung_versch
         if alle_phenyl_sub_alle_pos is None:
             alle_phenyl_sub_alle_pos = {}
 
-        endpunkt_liste = _substituent_verbindung(stamm_kette_punkte, alle_phenyl_sub_alle_pos, plotter,
+        endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_phenyl_sub_alle_pos, plotter,
                                                 bindung_verschiebung, besetzt_liste)
         if endpunkt_liste is None:
             endpunkt_liste = []

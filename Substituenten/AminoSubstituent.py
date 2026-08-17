@@ -1,7 +1,7 @@
 from pyvista import lines_from_points
 from numpy import array
 from InputParser import dic_converter
-from HelferGeometrie import _substituent_verbindung
+from HelferGeometrie import substituent_verbindung
 
 def amino_substituent(stamm_kette_punkte, amin_input, plotter,
                       bindung_verschiebung, besetzt_liste, verschiebung_h=0.2):
@@ -11,17 +11,17 @@ def amino_substituent(stamm_kette_punkte, amin_input, plotter,
         if alle_amin_alle_pos is None:
             alle_amin_alle_pos = {}
 
-        endpunkt_liste = _substituent_verbindung(stamm_kette_punkte, alle_amin_alle_pos, plotter, bindung_verschiebung, besetzt_liste)
+        endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_amin_alle_pos, plotter, bindung_verschiebung, besetzt_liste)
 
         if endpunkt_liste is None:
             endpunkt_liste = []
 
         for endpunkt in endpunkt_liste:
-            koordinaten = endpunkt[0]
+            wasserstoff_anfangspunkt = endpunkt[0]
             position_kette = endpunkt[1]
 
             plotter.add_point_labels(
-                points=koordinaten,
+                points=wasserstoff_anfangspunkt,
                 labels=["N"],
                 font_size=30,
                 point_color="#1e7fcb",
@@ -31,29 +31,20 @@ def amino_substituent(stamm_kette_punkte, amin_input, plotter,
                 shape=None
             )
 
-            vorzeichen = -1 if position_kette in besetzt_liste else 1
-            y_formel = bindung_verschiebung - 2 if position_kette % 2 == 0 else bindung_verschiebung
+            wasserstoff_endpunkt = 2 * wasserstoff_anfangspunkt - stamm_kette_punkte[position_kette]
 
-            wasserstoff_verbindung_punkte_links = array([
-                koordinaten,
-                array([stamm_kette_punkte[position_kette][0] + vorzeichen * -bindung_verschiebung,
-                          y_formel - verschiebung_h if position_kette % 2 == 0 else y_formel + verschiebung_h, 0])
-            ])
+            wasserstoff_endpunkt_links = [wasserstoff_endpunkt[0] + verschiebung_h, wasserstoff_endpunkt[1], wasserstoff_endpunkt[2]]
+            wasserstoff_endpunkt_rechts = [wasserstoff_endpunkt[0] - verschiebung_h, wasserstoff_endpunkt[1], wasserstoff_endpunkt[2]]
 
-            wasserstoff_verbindung_punkte_rechts = array([
-                koordinaten,
-                array([2 * koordinaten[0] - wasserstoff_verbindung_punkte_links[1][0],
-                          y_formel - verschiebung_h if position_kette % 2 == 0 else y_formel + verschiebung_h, 0])
-            ])
 
-            wasserstoff_verbindung_linie_links = lines_from_points(wasserstoff_verbindung_punkte_links)
-            wasserstoff_verbindung_linie_rechts = lines_from_points(wasserstoff_verbindung_punkte_rechts)
+            wasserstoff_verbindung_linie_links = lines_from_points([wasserstoff_anfangspunkt, wasserstoff_endpunkt_links])
+            wasserstoff_verbindung_linie_rechts = lines_from_points([wasserstoff_anfangspunkt, wasserstoff_endpunkt_rechts])
 
             plotter.add_mesh(wasserstoff_verbindung_linie_links, line_width=3)
             plotter.add_mesh(wasserstoff_verbindung_linie_rechts, line_width=3)
 
             plotter.add_point_labels(
-                points=[wasserstoff_verbindung_punkte_links[1], wasserstoff_verbindung_punkte_rechts[1]],
+                points=[wasserstoff_endpunkt_links, wasserstoff_endpunkt_rechts],
                 labels=["H", "H"],
                 font_size=30,
                 point_color="#d9e4ea",

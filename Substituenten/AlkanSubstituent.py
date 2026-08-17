@@ -3,7 +3,7 @@ from numpy import array, insert
 from InputParser import dic_converter
 
 
-def alkan_substituent(stamm_kette_punkte, alkan_input, plotter, besetzt_liste, dehnung_x=8, dehnung_y=0.5):
+def alkan_substituent(stamm_kette_punkte, alkan_input, plotter, bindung_verschiebung, besetzt_liste, dehnung_x=8, dehnung_y=0.5):
     try:
         """
         pos = Position des Substituents, in der Form 1 oder 3,8

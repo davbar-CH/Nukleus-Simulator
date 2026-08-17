@@ -35,7 +35,7 @@ def text_auslesen(input_text):
 def positions_berechnung(massenzahl, n_neutronen, ordnungszahl, n_schalen, plotter, radius=1):
     """
     Die Funktion berechnet anhand der Massenzahl (also der Anzahl Nukleonen) die Position der Nukleonen
-    mit Hilfe des "Fibonacci Sphere Algorithm".
+    mithilfe des "Fibonacci Sphere Algorithm".
 
     Danach nähert die Funktion die Nukleonen (also Sphären) so nahe aneinander, bis sie sich berühren. In Blau werden
     die Neutronen, in Rot die Protonen dargestellt.
@@ -202,7 +202,7 @@ class MainWindow(QMainWindow):
             self.infos.setText("Zerfallsreihe"+"\n"+"\n".join([element for element in zerfallsreihe]))
         self.infos.setFont(QFont('Times', 10))"""
 
-        self.infos.setText(start.plot())
+        #self.infos.setText(start.plot())
         positions_berechnung(
             massenzahl,
             n_neutronen,
