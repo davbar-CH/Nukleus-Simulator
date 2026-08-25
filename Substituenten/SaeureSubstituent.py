@@ -15,14 +15,17 @@ def saeure_substituent(stamm_kette_punkte, saeure_input, plotter, bindung_versch
                                   else bindung_verschiebung - 180)
             alkohol_substituent(stamm_kette_punkte, [(str(letzte_position), "", "ol")], plotter,
                                 verschiebung_alkohol_ende, besetzt_liste)
-            keton_substituent(stamm_kette_punkte, letzte_position, alle_saeure_alle_pos,
+            besetzt_liste.remove(letzte_position)
+            keton_substituent(stamm_kette_punkte, alle_saeure_alle_pos,
                                        plotter, verschiebung_sauerstoff, besetzt_liste)
 
         alle_saeure_alle_pos["säure"] = [1]
         verschiebung_alkohol_ende = bindung_verschiebung - 90
         alkohol_substituent(stamm_kette_punkte, [(str(1), "", "ol")], plotter,
                             verschiebung_alkohol_ende, besetzt_liste)
-        keton_substituent(stamm_kette_punkte, 1, alle_saeure_alle_pos,
+
+        besetzt_liste.remove(1)
+        keton_substituent(stamm_kette_punkte, alle_saeure_alle_pos,
                                    plotter, verschiebung_sauerstoff, besetzt_liste)
 
     except Exception as e:
