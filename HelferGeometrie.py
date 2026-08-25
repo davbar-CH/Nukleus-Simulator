@@ -13,18 +13,18 @@ def substituent_verbindung(stamm_kette_punkte, substituent_dic, plotter, bindung
                     vorzeichen = -1 if sub_pos in besetzt_liste else 1
                     y_formel = -1 if sub_pos % 2 == 0 else 1
 
-                    _substituent_verbindung_punkte = array([
+                    substituent_verbindung_punkte = array([
                         anfangspunkt,
                         array([anfangspunkt[0] + vorzeichen * (0.5 * cos(bindung_verschiebung)),
                                anfangspunkt[1] + vorzeichen * y_formel * (0.5 * sin(bindung_verschiebung)),
                                0])
                     ])
 
-                    endpunkt = [_substituent_verbindung_punkte[1], sub_pos - 1, substituent]
+                    endpunkt = [substituent_verbindung_punkte[1], sub_pos - 1, substituent]
                     endpunkt_liste.append(endpunkt)
 
                     besetzt_liste.append(sub_pos)
-                    verbindung_substituent = lines_from_points(_substituent_verbindung_punkte)
+                    verbindung_substituent = lines_from_points(substituent_verbindung_punkte)
                     plotter.add_mesh(verbindung_substituent, line_width=2, color=(0, 0, 0))
             return endpunkt_liste
 

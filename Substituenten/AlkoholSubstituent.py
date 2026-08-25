@@ -12,12 +12,13 @@ def alkohol_substituent(stamm_kette_punkte, alkohol_input, plotter,
 
         endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_alkohol_alle_pos, plotter,
                                                 bindung_verschiebung, besetzt_liste)
+
         if endpunkt_liste is None:
             endpunkt_liste = []
 
         for endpunkt in endpunkt_liste:
             wasserstoff_anfangspunkt = endpunkt[0]
-            position_kette = endpunkt[1]
+            position = endpunkt[1]
 
             plotter.add_point_labels(
                 points=wasserstoff_anfangspunkt,
@@ -30,7 +31,7 @@ def alkohol_substituent(stamm_kette_punkte, alkohol_input, plotter,
                 shape=None
             )
 
-            wasserstoff_endpunkt = 2 * wasserstoff_anfangspunkt - stamm_kette_punkte[position_kette]
+            wasserstoff_endpunkt = 2 * wasserstoff_anfangspunkt - stamm_kette_punkte[position]
 
             wasserstoff_verbindung_linie = lines_from_points([wasserstoff_anfangspunkt, wasserstoff_endpunkt])
             plotter.add_mesh(wasserstoff_verbindung_linie, line_width=3)

@@ -1,5 +1,5 @@
 from InputParser import dic_converter
-from Substituenten import sauerstoff_doppelbindung
+from Substituenten import keton_substituent
 from HelferGeometrie import substituent_verbindung
 
 def aldehyd_substituent(stamm_kette_punkte, aldehyd_input, plotter, bindung_verschiebung, besetzt_liste, verschiebung_h=0.2):
@@ -33,17 +33,18 @@ def aldehyd_substituent(stamm_kette_punkte, aldehyd_input, plotter, bindung_vers
                     shape=None
                 )
 
-            sauerstoff_doppelbindung(stamm_kette_punkte, letzte_position, alle_aldehyd_alle_pos,
+            besetzt_liste.remove(letzte_position)
+            keton_substituent(stamm_kette_punkte, alle_aldehyd_alle_pos,
                                        plotter, verschiebung_sauerstoff, besetzt_liste)
 
         position = 1
-        if alle_aldehyd_alle_pos["formyl"]:
+        if "formyl" in alle_aldehyd_alle_pos:
             alle_aldehyd_alle_pos["formyl"] = [letzte_position]
             position = letzte_position
         else:
             alle_aldehyd_alle_pos["al"] = [position]
 
-        verschiebung_wasserstoff_ende = (bindung_verschiebung + 90 if letzte_position % 2 == 0
+        verschiebung_wasserstoff_ende = (bindung_verschiebung + 90 if position % 2 == 0
                                   else bindung_verschiebung - 180)
 
         endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_aldehyd_alle_pos, plotter,
@@ -64,7 +65,8 @@ def aldehyd_substituent(stamm_kette_punkte, aldehyd_input, plotter, bindung_vers
                 always_visible=True,
                 shape=None
             )
-        sauerstoff_doppelbindung(stamm_kette_punkte, position, alle_aldehyd_alle_pos,
+        besetzt_liste.remove(position)
+        keton_substituent(stamm_kette_punkte, alle_aldehyd_alle_pos,
                                    plotter, verschiebung_sauerstoff, besetzt_liste)
 
     except Exception as e:

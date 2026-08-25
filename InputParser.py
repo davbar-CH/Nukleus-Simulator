@@ -66,4 +66,7 @@ def text_auslesen(input_text):
     aldehyd_pattern = rf"{zaehl_woerter_pattern}(formyl|al)"
     aldehyd = re.findall(aldehyd_pattern, input_ohne_stereo_sub, flags=re.IGNORECASE)
 
-    return stereo, alkan, halogen, phenyl, alkohol, amin, is_cyclo, stamm, bindung_typ, saeure, aldehyd
+    keton_pattern = rf"{zaehl_woerter_pattern}(oxo|on)"
+    keton = re.findall(keton_pattern, input_ohne_stereo_sub, flags=re.IGNORECASE)
+
+    return stereo, alkan, halogen, phenyl, alkohol, amin, is_cyclo, stamm, bindung_typ, saeure, aldehyd, keton

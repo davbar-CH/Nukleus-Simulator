@@ -10,7 +10,7 @@ from HelferGeometrie import bindung_zeichnen
 from StammKette import stamm_kette
 
 def darsteller(stereo, alkan_input, halogen_input, phenyl_input, alkohol_input, amin_input, is_cyclo, stamm_input,
-               bindung_typ, saeure_input, aldehyd_input, plotter, bindung_verschiebung):
+               bindung_typ, saeure_input, aldehyd_input, keton_input, plotter, bindung_verschiebung):
     try:
         plotter.clear()
         bindung_verschiebung = -np.deg2rad(bindung_verschiebung) - (np.pi / 2)
@@ -32,7 +32,8 @@ def darsteller(stereo, alkan_input, halogen_input, phenyl_input, alkohol_input, 
             (alkohol_substituent, alkohol_input),
             (amino_substituent, amin_input),
             (saeure_substituent, saeure_input),
-            (aldehyd_substituent, aldehyd_input)
+            (aldehyd_substituent, aldehyd_input),
+            (keton_substituent, keton_input)
         ]
 
         for funktion, text in substituenten:
@@ -101,7 +102,7 @@ class MainWindow(QMainWindow):
             return
 
         (stereo, alkan_input, halogen_input, phenyl_input, alkohol_input, amin_input, is_cyclo, stamm_input, bindung_typ,
-         saeure_input, aldehyd_input) = resultat
+         saeure_input, aldehyd_input, keton_input) = resultat
         print(resultat)
 
         darsteller(
@@ -116,6 +117,7 @@ class MainWindow(QMainWindow):
             bindung_typ,
             saeure_input,
             aldehyd_input,
+            keton_input,
             self.plotter,
             self.dial.value()
         )

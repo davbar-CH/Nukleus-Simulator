@@ -1,5 +1,4 @@
 from pyvista import lines_from_points
-from numpy import array
 from InputParser import dic_converter
 from HelferGeometrie import substituent_verbindung
 
@@ -11,14 +10,15 @@ def amino_substituent(stamm_kette_punkte, amin_input, plotter,
         if alle_amin_alle_pos is None:
             alle_amin_alle_pos = {}
 
-        endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_amin_alle_pos, plotter, bindung_verschiebung, besetzt_liste)
+        endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_amin_alle_pos, plotter,
+                                                                         bindung_verschiebung, besetzt_liste)
 
         if endpunkt_liste is None:
             endpunkt_liste = []
 
         for endpunkt in endpunkt_liste:
             wasserstoff_anfangspunkt = endpunkt[0]
-            position_kette = endpunkt[1]
+            position = endpunkt[1]
 
             plotter.add_point_labels(
                 points=wasserstoff_anfangspunkt,
@@ -31,7 +31,7 @@ def amino_substituent(stamm_kette_punkte, amin_input, plotter,
                 shape=None
             )
 
-            wasserstoff_endpunkt = 2 * wasserstoff_anfangspunkt - stamm_kette_punkte[position_kette]
+            wasserstoff_endpunkt = 2 * wasserstoff_anfangspunkt - stamm_kette_punkte[position]
 
             wasserstoff_endpunkt_links = [wasserstoff_endpunkt[0] + verschiebung_h, wasserstoff_endpunkt[1], wasserstoff_endpunkt[2]]
             wasserstoff_endpunkt_rechts = [wasserstoff_endpunkt[0] - verschiebung_h, wasserstoff_endpunkt[1], wasserstoff_endpunkt[2]]

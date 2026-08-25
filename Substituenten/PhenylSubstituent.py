@@ -16,14 +16,15 @@ def phenyl_substituent(stamm_kette_punkte, phenyl_input, plotter, bindung_versch
 
         for endpunkt in endpunkt_liste:
             koordinaten = endpunkt[0]
-            position_kette = endpunkt[1]
+            position = endpunkt[1]
 
             phenyl_mesh = Polygon(
                 center=[koordinaten[0],
-                        koordinaten[1] - phenyl_groesse if position_kette % 2 == 0 else koordinaten[1] + phenyl_groesse,
+                        koordinaten[1] - phenyl_groesse if position % 2 == 0 else koordinaten[1] + phenyl_groesse,
                         0],
                 radius=phenyl_groesse,
                 fill=False)
+
             plotter.add_mesh(phenyl_mesh, line_width=2, color=(0, 0, 0))
             punkte = phenyl_mesh.points
 
