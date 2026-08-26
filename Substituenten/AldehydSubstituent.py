@@ -41,14 +41,14 @@ def aldehyd_substituent(stamm_kette_punkte, aldehyd_input, plotter, bindung_vers
         if "formyl" in alle_aldehyd_alle_pos:
             alle_aldehyd_alle_pos["formyl"] = [letzte_position]
             position = letzte_position
+            verschiebung_wasserstoff_anfang = (bindung_verschiebung + 90 if letzte_position % 2 == 0
+                                  else bindung_verschiebung - 180)
         else:
             alle_aldehyd_alle_pos["al"] = [position]
-
-        verschiebung_wasserstoff_ende = (bindung_verschiebung - 90 if position % 2 == 0
-                                  else bindung_verschiebung + 180)
+            verschiebung_wasserstoff_anfang = bindung_verschiebung + 180
 
         endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_aldehyd_alle_pos, plotter,
-                                                verschiebung_wasserstoff_ende, besetzt_liste)
+                                                verschiebung_wasserstoff_anfang, besetzt_liste)
         if endpunkt_liste is None:
             endpunkt_liste = []
 
@@ -70,4 +70,4 @@ def aldehyd_substituent(stamm_kette_punkte, aldehyd_input, plotter, bindung_vers
                                    plotter, verschiebung_sauerstoff, besetzt_liste)
 
     except Exception as e:
-        print(f"Fehler in der Darstellung der Säure: {e}")
+        print(f"Fehler in der Darstellung der Aldehyds: {e}")

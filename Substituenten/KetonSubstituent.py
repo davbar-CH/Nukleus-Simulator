@@ -1,11 +1,11 @@
 from HelferGeometrie import *
+from InputParser import dic_converter
 
-
-def keton_substituent(stamm_kette_punkte, alle_saeure_alle_pos,
+def keton_substituent(stamm_kette_punkte, keton_input,
                       plotter, verschiebung_sauerstoff,
                       besetzt_liste):
-
-    endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_saeure_alle_pos, plotter,
+    alle_keton_alle_pos = dic_converter(keton_input)
+    endpunkt_liste = substituent_verbindung(stamm_kette_punkte, alle_keton_alle_pos, plotter,
                                           verschiebung_sauerstoff, besetzt_liste)
     for endpunkt in endpunkt_liste:
         sauerstoff_koordinaten = endpunkt[0]
